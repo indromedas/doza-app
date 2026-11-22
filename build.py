@@ -1,44 +1,67 @@
-"""Собирает Telegram Mini App / PWA из dose-calculator.html.
+"""Собирает Telegram Mini App / PWA из исходника калькулятора.
+
+Исходник: src/dose-calculator.html (хранится в репозитории).
+Если рядом с папкой miniapp лежит более новый ../dose-calculator.html, он сначала копируется в src/.
 
 Запуск:  python build.py
-Результат: index.html рядом с этим файлом (manifest, sw.js и иконки уже лежат здесь).
-После каждого изменения калькулятора запустите сборку и увеличьте VERSION в sw.js,
-чтобы у пользователей обновился офлайн-кэш.
+Результат: index.html. После правок увеличьте VERSION в sw.js, чтобы обновился офлайн-кэш.
 """
 from pathlib import Path
+import shutil
 
 HERE = Path(__file__).resolve().parent
-SRC = HERE.parent / "dose-calculator.html"
+SRC = HERE / "src" / "dose-calculator.html"
+OUTER = HERE.parent / "dose-calculator.html"
+
+SRC.parent.mkdir(exist_ok=True)
+if OUTER.exists() and (not SRC.exists() or OUTER.stat().st_mtime > SRC.stat().st_mtime):
+    shutil.copy2(OUTER, SRC)
+    print("исходник обновлён из", OUTER.name)
 
 src = SRC.read_text(encoding="utf-8")
 cut = src.index("</style>") + len("</style>")
 head_part, body_part = src[:cut], src[cut:]
-# служебный тег артефакта Claude в автономной странице не нужен
-head_part = "\n".join(l for l in head_part.splitlines() if "claude:viewport-fit-sides" not in l)
+lines = []
+for l in head_part.splitlines():
+    if "claude:viewport-fit-sides" in l:
+        continue                      # служебный тег артефакта Claude
+    if "fonts.googleapis.com" in l or "fonts.gstatic.com" in l:
+        continue                      # шрифты подключаются локально
+    lines.append(l)
+head_part = "\n".join(lines)
 
-HEAD = """<!doctype html>
+CSP = ("default-src 'self'; "
+       "script-src 'self' 'unsafe-inline' https://telegram.org; "
+       "style-src 'self' 'unsafe-inline'; "
+       "font-src 'self'; img-src 'self' data:; connect-src 'self'; "
+       "object-src 'none'; base-uri 'self'; form-action 'none'")
+
+HEAD = f"""<!doctype html>
 <html lang="ru">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="{CSP}">
+<meta name="referrer" content="no-referrer">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#2445C4">
 <meta name="description" content="Калькулятор доз лекарств по возрасту, весу и росту; укладка СМП по приказу 1165н.">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-180.png">
+<link rel="stylesheet" href="fonts/fonts.css">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Дозировки">
 <script src="https://telegram.org/js/telegram-web-app.js" async id="tgScript"></script>
 <style>
-:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-body{margin:0;font-size:14px;-webkit-text-size-adjust:100%}
-img{max-width:100%}
-[hidden]{display:none!important}
-.net{font-size:12.5px;color:var(--muted)}
-.net b{color:var(--ok);font-weight:600}
-.net.off b{color:var(--warn)}
-html.tg .top .wrap{padding-block:12px}
+:root{{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}}
+body{{margin:0;font-size:14px;-webkit-text-size-adjust:100%}}
+img{{max-width:100%}}
+[hidden]{{display:none!important}}
+.net{{font-size:12.5px;color:var(--muted)}}
+.net b{{color:var(--ok);font-weight:600}}
+.net.off b{{color:var(--warn)}}
+html.tg .top .wrap{{padding-block:12px}}
 </style>
 """
 
@@ -87,6 +110,7 @@ TAIL = r"""
 </html>
 """
 
-out = HEAD + "\n".join(l for l in head_part.splitlines()) + "\n</head>\n<body>\n" + body_part.strip() + "\n" + TAIL
+out = HEAD + head_part + "\n</head>\n<body>\n" + body_part.strip() + "\n" + TAIL
+assert "fonts.googleapis.com" not in out
 (HERE / "index.html").write_text(out, encoding="utf-8")
 print("index.html:", len(out), "символов")

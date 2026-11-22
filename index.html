@@ -2,12 +2,15 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://telegram.org; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#2445C4">
 <meta name="description" content="Калькулятор доз лекарств по возрасту, весу и росту; укладка СМП по приказу 1165н.">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-180.png">
+<link rel="stylesheet" href="fonts/fonts.css">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Дозировки">
@@ -23,9 +26,6 @@ img{max-width:100%}
 html.tg .top .wrap{padding-block:12px}
 </style>
 <title>Калькулятор дозировок</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
 <style>
 /* Layout: clinical worksheet — patient card on the left, drug picker and a pharmacy-label result (Rp./S.) on the right; one column on phones */
 :root{
@@ -222,6 +222,10 @@ a.copy{text-decoration:none;display:inline-flex;align-items:center}
 
 footer{border-top:1px solid var(--line);padding-block:20px 36px;color:var(--muted);font-size:13px;display:grid;gap:8px;max-width:80ch}
 footer p{margin:0}
+.terms{border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);padding:12px 16px;margin-top:6px}
+.terms summary{cursor:pointer;font-weight:600;color:var(--ink);font-size:14px}
+.terms-body{display:grid;gap:8px;margin-top:10px;line-height:1.55}
+.terms .ver{font:12px var(--font-num);color:var(--muted)}
 footer b{color:var(--ink);font-weight:600}
 </style>
 </head>
@@ -394,6 +398,18 @@ footer b{color:var(--ink);font-weight:600}
     <p><b>Антибиотики в/в и шкалы.</b> Дозы антибиотиков — РЛС и инструкции производителей с коррекцией по клиренсу креатинина. Шкалы: Глазго, qSOFA (Sepsis-3), NEWS2 (Royal College of Physicians). Избранное хранится только на этом устройстве.</p>
     <p><b>Формулы.</b> Площадь поверхности тела — Мостеллер; идеальная масса — Devine; клиренс креатинина — Кокрофт–Голт (с 18 лет, по идеальной или скорректированной массе); СКФ у детей 1–17 лет — формула Шварца у постели больного.</p>
     <p><b>Ограничения.</b> Калькулятор не проверяет аллергии, сопутствующие болезни и взаимодействия. При подозрении на передозировку звоните 103 или 112.</p>
+    <details class="terms" id="terms">
+      <summary>О проекте и условия использования</summary>
+      <div class="terms-body">
+        <p><b>Что это.</b> Справочный калькулятор доз для медицинских работников: амбулаторные препараты, укладки скорой помощи по приказу Минздрава России № 1165н, анестезиология, антибиотики, экстренная карточка и шкалы. Дозы взяты из инструкций в Регистре лекарственных средств России (РЛС), а где их там нет — из инструкций производителей и клинических рекомендаций; источник указан в карточке каждого препарата.</p>
+        <p><b>Это не медицинское изделие.</b> Калькулятор не зарегистрирован как медицинское изделие и не заменяет назначение врача, инструкцию к конкретной упаковке и клиническое мышление. Решение о дозе и способе введения принимает врач, который видит пациента.</p>
+        <p><b>Без гарантий.</b> Авторы стараются поддерживать данные точными, но не гарантируют отсутствие ошибок и не несут ответственности за последствия применения расчётов. Перед введением сверяйте дозу с инструкцией и концентрацией в вашей ампуле.</p>
+        <p><b>Ваши данные.</b> Возраст, пол, вес, рост и креатинин обрабатываются только на вашем устройстве и никуда не передаются. Список избранного хранится в памяти браузера на этом устройстве. Регистрации, аналитики и рекламы нет.</p>
+        <p><b>Нашли ошибку в дозе?</b> Сообщите — это важнее всего: <a href="https://github.com/indromedas/doza-app/issues" target="_blank" rel="noopener">github.com/indromedas/doza-app/issues</a>.</p>
+        <p><b>Права.</b> © 2026 indromedas. Использование для личной профессиональной работы — свободно. Копирование, изменение и распространение, в том числе коммерческое, — только с разрешения автора.</p>
+        <p class="ver">Версия 5 · данные сверены в ноябре 2026 года</p>
+      </div>
+    </details>
   </footer>
 </div>
 

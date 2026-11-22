@@ -1,8 +1,10 @@
 /* Офлайн-кэш калькулятора дозировок.
    При каждом обновлении калькулятора увеличивайте VERSION — старый кэш удалится. */
-const VERSION = 'doza-v4';
-const CORE = ['./', 'index.html', 'manifest.webmanifest', 'icon-180.png', 'icon-192.png', 'icon-512.png'];
-const EXT = /^https:\/\/(fonts\.googleapis\.com|fonts\.gstatic\.com|telegram\.org)\//;
+const VERSION = 'doza-v5';
+const CORE = ['./', 'index.html', 'manifest.webmanifest', 'icon-180.png', 'icon-192.png', 'icon-512.png',
+  'fonts/fonts.css', 'fonts/GolosText-cyrillic-0.woff2', 'fonts/GolosText-latin-1.woff2',
+  'fonts/JetBrainsMono-cyrillic-2.woff2', 'fonts/JetBrainsMono-latin-3.woff2'];
+const EXT = /^https:\/\/telegram\.org\//;
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(VERSION).then(c => c.addAll(CORE)).then(() => self.skipWaiting()));
