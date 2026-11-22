@@ -215,6 +215,7 @@ details.trace ol{margin:10px 0 0;padding-left:22px;display:grid;gap:4px;font:13p
 .info-text{font-size:14.5px;line-height:1.55;margin:0}
 .linkbtn{font:600 14px var(--font-ui);border:1px solid var(--accent);background:var(--accent-soft);color:var(--accent);border-radius:8px;padding:9px 14px;cursor:pointer;justify-self:start}
 .chips.regs label{border-radius:8px}
+.card-h{margin:6px 0 -6px;font-size:12px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
 
 footer{border-top:1px solid var(--line);padding-block:20px 36px;color:var(--muted);font-size:13px;display:grid;gap:8px;max-width:80ch}
 footer p{margin:0}
@@ -239,6 +240,7 @@ footer b{color:var(--ink);font-weight:600}
     <button type="button" role="tab" id="tabMain" data-tab="main" aria-selected="true">Амбулаторные формы <span class="cnt" id="mainCnt">33</span></button>
     <button type="button" role="tab" id="tabSmp" data-tab="smp" aria-selected="false">СМП · укладка 1165н <span class="cnt" id="smpCnt">85</span></button>
     <button type="button" role="tab" id="tabAnest" data-tab="anest" aria-selected="false">Анестезиология <span class="cnt" id="anestCnt">12</span></button>
+    <button type="button" role="tab" id="tabCard" data-tab="card" aria-selected="false">Экстренная карточка</button>
   </nav>
 
   <main class="layout">
@@ -318,6 +320,7 @@ footer b{color:var(--ink);font-weight:600}
      <div class="work-pane" id="paneSmp" hidden>
       <div class="panel" aria-labelledby="smpH">
         <div class="ph"><h2 id="smpH">Укладка общепрофильная СМП</h2><span>Состав — приказ Минздрава России № 1165н</span></div>
+        <div class="seg inline" role="radiogroup" aria-label="Вид укладки" style="margin-bottom:14px"><input type="radio" name="smpVar" id="smpVarGen" value="gen" checked><label for="smpVarGen">Общепрофильная</label><input type="radio" name="smpVar" id="smpVarRean" value="rean"><label for="smpVarRean">Реанимационная</label></div>
         <div class="inbox search"><input id="smpQ" type="search" autocomplete="off" placeholder="Препарат: эпинефрин, амиодарон, налоксон…" aria-label="Поиск в укладке"></div>
         <div class="dgroups" id="smpDrugs"></div>
         <div class="opts">
@@ -338,6 +341,9 @@ footer b{color:var(--ink);font-weight:600}
         </div>
       </div>
       <div class="panel result" id="anestResult" aria-live="polite"></div>
+     </div>
+     <div class="work-pane" id="paneCard" hidden>
+      <div class="panel result" id="cardResult" aria-live="polite"></div>
      </div>
      <div class="work-pane" id="paneMain">
       <div class="panel" aria-labelledby="drugH">
@@ -366,6 +372,7 @@ footer b{color:var(--ink);font-weight:600}
     <p><b>Источники.</b> Инструкции по медицинскому применению из Регистра лекарственных средств России (rlsnet.ru), сверено в ноябре 2026 года. В карточке каждого препарата есть ссылка на страницу РЛС. Если в РЛС для препарата нет схемы дозирования, в карточке это отмечено.</p>
     <p><b>Вкладка СМП.</b> Состав — укладка общепрофильная по приказу Минздрава России от 28.10.2020 № 1165н. Дозы — из РЛС; где в РЛС схемы нет, они взяты из инструкции производителя или клинических рекомендаций, и в карточке это отмечено. Концентрации ампул — стандартные российские формы: сверяйте с ампулой в руках.</p>
     <p><b>Вкладка «Анестезиология».</b> Только для врача анестезиолога-реаниматолога при возможности ИВЛ и мониторинга. Дозы — РЛС и инструкции препаратов; рокуроний при ожирении считается по идеальной массе, сугаммадекс — по фактической.</p>
+    <p><b>Экстренная карточка.</b> Размеры оборудования, энергия разряда и дозы для реанимации по массе — по рекомендациям ERC 2021 и Национального совета по реанимации; нормы и ориентир массы — APLS.</p>
     <p><b>Формулы.</b> Площадь поверхности тела — Мостеллер; идеальная масса — Devine; клиренс креатинина — Кокрофт–Голт (с 18 лет, по идеальной или скорректированной массе); СКФ у детей 1–17 лет — формула Шварца у постели больного.</p>
     <p><b>Ограничения.</b> Калькулятор не проверяет аллергии, сопутствующие болезни и взаимодействия. При подозрении на передозировку звоните 103 или 112.</p>
   </footer>
@@ -1608,7 +1615,7 @@ let curTab='main';
 function render(){
   const p=readPatient();
   renderMetrics(p);
-  if(KITS[curTab])renderKit(KITS[curTab],p);else renderMain(p);
+  if(KITS[curTab])renderKit(KITS[curTab],p);else if(curTab==='card')renderCard(p);else renderMain(p);
 }
 function renderMain(p){
   const d=cur();
@@ -1730,7 +1737,9 @@ const SMP_GROUPS=[
   {id:'pain',name:'Антибактериальные, обезболивающие и анестетики'},
   {id:'neuro',name:'Неврологические и противосудорожные'},
   {id:'resp',name:'Дыхательные и противоаллергические'},
-  {id:'other',name:'Антидоты и прочие'}
+  {id:'other',name:'Антидоты и прочие'},
+  {id:'fluids',name:'Инфузионные растворы'},
+  {id:'anest',name:'Анестетики и миорелаксанты'}
 ];
 
 const SMP=[
@@ -2246,14 +2255,188 @@ SMPd('diphenhydramine'),
 ];
 
 SMPd('tramadol').agMap='supp';SMPd('dopamine').agMap='supp';SMPd('diphenhydramine').agMap='peri';
+/* ---- Инфузионные растворы (укладка общепрофильная, раздел 1.10) ---- */
+const CRYST_REGS=(srcRls)=>[
+  {id:'bol',label:'Болюс при гиповолемии, шоке',route:'в/в струйно или быстро капельно, раствор согреть',a:{fix:[500,1000]},c:{kg:[10,20],t:'10–20 мл/кг'},freq:'оценить ответ и при необходимости повторить',max:'детям обычно суммарно до 40–60 мл/кг в первый час'},
+  {id:'day',label:'Суточная потребность',route:'в/в капельно',a:{fix:[1000,3000]},c:{fn(p,r){const w=p.w,d=w<=10?100*w:w<=20?1000+50*(w-10):1500+20*(w-20);r.trace.push(`Холлидей — Сегар (4-2-1): ${fU(d,'мл')} в сутки ≈ ${fN(d/24)} мл/ч`);return[d,d];}},freq:srcRls?'скорость — в среднем 540 мл/ч, при необходимости больше':'по потребности и диурезу',daily:true}
+];
+const SMP_FLUIDS=[
+{id:'glucose',name:'Декстроза (глюкоза)',g:'fluids',src:[['Декстроза — описание вещества',AS('dekstroza-457')]],
+ srcNote:'РЛС: скорость — 40% до 30 капель/мин. Дозы при гипогликемии (взрослым 20–40 мл 40%, детям 0,2 г/кг в виде 10% раствора) — клинические рекомендации и ERC 2021.',
+ forms:[amp('a10','400 мг/мл (40%) · амп. 10 мл',0.4,'г',10),amp('a20','400 мг/мл (40%) · амп. 20 мл',0.4,'г',20),amp('f5','50 мг/мл (5%) · флакон 200 мл',0.05,'г',200)],
+ regs:[{id:'hypo',f:['a10','a20'],label:'Гипогликемия',route:'в/в струйно медленно',a:{fix:[8,16],t:'20–40 мл 40%'},c:{kg:[0.2,0.2],max:16},dilC:{c:0.1,t:'40% развести 1:3 (1 часть + 3 части воды или 0,9% NaCl) → 10%'},freq:'контроль глюкозы через 10–15 мин, при необходимости повтор'},
+       {id:'inf',label:'Инфузия 5%',f:['f5'],route:'в/в капельно',a:{fix:[10,25],t:'200–500 мл 5%'},c:{kg:[0.5,1],t:'10–20 мл/кг 5%'},freq:'5% — не быстрее 500 мл/ч'}],
+ notes:[['info','40% раствор вводят в крупную вену (раздражает сосуд). Пациентам с алкоголизмом и истощением сначала тиамин.']]},
+{id:'nacl',name:'Натрия хлорид 0,9%',g:'fluids',src:[['Натрия хлорид — описание вещества',AS('natriia-xlorid-416')]],
+ srcNote:'РЛС: в среднем 1 л в сутки, при дегидратации до 3 л, скорость 540 мл/ч. Болюс 10–20 мл/кг у детей — ERC 2021 и клинические рекомендации.',
+ forms:[amp('f250','0,9% · флакон 250 мл',1,'мл',250),amp('f500','0,9% · флакон 500 мл',1,'мл',500)],
+ regs:CRYST_REGS(true),
+ notes:[['info','Противопоказан при гипернатриемии, отёке лёгких и мозга, острой левожелудочковой недостаточности.']]},
+{id:'ringer',name:'Раствор Рингера',brands:'Натрия хлорида раствор сложный',g:'fluids',src:[['Описание вещества',AS('natriia-xlorida-rastvor-sloznyi-kaliia-xlorid-kalciia-xlorid-natriia-xlorid-2083')]],
+ srcNote:'В РЛС описание без доз. Дозы — как для изотонических кристаллоидов (клинические рекомендации, ERC 2021).',
+ forms:[amp('f250','Флакон 250 мл',1,'мл',250),amp('f500','Флакон 500 мл',1,'мл',500)],
+ regs:CRYST_REGS(false),notes:[['info','Содержит кальций: не смешивать с цефтриаксоном и препаратами крови в одной системе.']]},
+{id:'acetate',name:'Калия хлорид + натрия ацетат + натрия хлорид',brands:'Ацесоль, Хлосоль',g:'fluids',src:[['Поиск в РЛС',SRCH('калия хлорид натрия ацетат натрия хлорид')]],
+ srcNote:'Дозы — как для изотонических кристаллоидов (клинические рекомендации).',
+ forms:[amp('f400','Флакон 400 мл',1,'мл',400)],regs:CRYST_REGS(false),
+ notes:[['info','Содержит калий: осторожно при гиперкалиемии и анурии.']]},
+{id:'sterofundin',name:'Стерофундин изотонический',brands:'сбалансированный кристаллоид',g:'fluids',src:[['Стерофундин изотонический',DR('sterofundin-izotoniceskii-30605')]],
+ srcNote:'В РЛС текст описания не загрузился. Дозы — как для изотонических кристаллоидов (клинические рекомендации).',
+ forms:[amp('f500','Флакон 500 мл',1,'мл',500)],regs:CRYST_REGS(false),
+ notes:[['info','Содержит калий, кальций и магний.']]},
+{id:'hes',name:'Гидроксиэтилкрахмал 6%',brands:'Волювен, Тетраспан',g:'fluids',src:[['Волювен — инструкция',DR('voliuven-18711')],['ГЭК — описание вещества',AS('gidroksietilkraxmal-1063')]],
+ forms:[amp('f500','Флакон 500 мл',1,'мл',500)],
+ regs:[{id:'hv',label:'Гиповолемия при кровопотере',route:'в/в капельно; первые 10–20 мл медленно',a:{fn(p,r){const mx=30*p.w;r.trace.push(`Не более 30 мл/кг в сутки = ${fU(mx,'мл')}`);return[250,Math.min(1000,mx)];}},freq:'только в начальной фазе, не дольше 24 ч',max:'не более 30 мл/кг в сутки'}],
+ cNo:'У детей применение ГЭК не рекомендуется (инструкция Волювена).',
+ notes:[['warn','Противопоказан при сепсисе, ожогах, почечной недостаточности, у критических пациентов, при коагулопатии и гипергидратации.']],
+ renal:[60,'stop','Нарушение функции почек — противопоказан.']},
+{id:'dextran',name:'Декстран',brands:'Реополиглюкин',g:'fluids',src:[['Реополиглюкин — инструкция',DR('reopoligliukin-4841')],['Декстран — описание вещества',AS('dekstran-1555')]],
+ forms:[amp('f200','Флакон 200 мл',1,'мл',200),amp('f400','Флакон 400 мл',1,'мл',400)],
+ regs:[{id:'shock',label:'Шок',route:'в/в капельно или струйно-капельно',a:{fix:[500,1500]},c:{kg:[5,10]},freq:'детям при необходимости до 15 мл/кг',max:'детям не более 15 мл/кг'},
+       {id:'detox',label:'Дезинтоксикация',route:'в/в капельно за 60–90 мин',a:{fix:[500,1250]},c:{kg:[5,10]}}],
+ notes:[['warn','Перед инфузией — кожная проба (0,05 мл внутрикожно) или биологическая проба. Противопоказан при ЧМТ с внутричерепной гипертензией, геморрагическом инсульте, отёке лёгких, продолжающемся кровотечении.']]},
+{id:'reamberin',name:'Меглюмина натрия сукцинат',brands:'Реамберин',g:'fluids',src:[['Реамберин — инструкция',DR('reamberin-12002')]],
+ age:{y:1,msg:'Детям до 1 года не применяют.'},
+ forms:[amp('f250','1,5% · флакон 250 мл',1,'мл',250),amp('f400','1,5% · флакон 400 мл',1,'мл',400)],
+ regs:[{id:'d',label:'Дезинтоксикация, гипоксия',route:'в/в капельно',a:{kg:[10,10],t:'средняя суточная доза'},c:{kg:[6,10]},freq:'взрослым 1–4,5 мл/мин (до 90 капель/мин), детям 3–4 мл/мин',daily:true}],
+ renal:[60,'warn','Почечная недостаточность — с осторожностью; при остром повреждении почек противопоказан.'],
+ notes:[['info','Противопоказан при ЧМТ с отёком мозга и декомпенсированном алкалозе.']]}
+];
+SMP.push(...SMP_FLUIDS);
+
+/* ---- Реанимационная укладка: дополнительно к общепрофильной ---- */
+const REANIM=[
+{id:'bicarb',name:'Натрия гидрокарбонат 4%',g:'fluids',src:[['Натрия гидрокарбонат — описание вещества',AS('natriia-gidrokarbonat-1482')]],
+ srcNote:'Взрослая доза — РЛС. Детская 1 ммоль/кг (≈ 2 мл/кг 4%) — ERC 2021; рутинно при СЛР не применяют.',
+ forms:[amp('f','40 мг/мл (4%) · флакон 200 мл',1,'мл',200)],
+ regs:[{id:'ac',label:'Выраженный метаболический ацидоз, гиперкалиемия',route:'в/в капельно',a:{fix:[50,100],t:'50–100 мл 3–5% раствора'},c:{kg:[2,2],t:'≈ 1 ммоль/кг'},freq:'под контролем КЩС'}],
+ notes:[['info','Не смешивать с адреналином и кальцием в одной системе. Противопоказан при алкалозе, гипокальциемии, гипохлоремии.']]},
+{id:'dobutamine',name:'Добутамин',g:'cv',src:[['Добутамин — описание вещества',AS('dobutamin-544')]],
+ forms:[amp('a','12,5 мг/мл · амп. 20 мл (250 мг)',12.5,'мг',20)],
+ regs:[{id:'inf',label:'Инфузия',route:'в/в через перфузор',inf:{rate:[2.5,10],ru:'мкг/кг/мин',mix:{amt:250,ml:50},child:true},freq:'при необходимости — до 20–40 мкг/кг/мин; у детей — меньшая терапевтическая широта'}],
+ notes:[['info','Противопоказан при тампонаде, стенозе аорты, субаортальном стенозе, желудочковых аритмиях.']]},
+{id:'atp',name:'Трифосаденин',brands:'АТФ',g:'cv',src:[['Трифосаденин — описание вещества',AS('trifosadenin-582')]],
+ forms:[amp('a','10 мг/мл (1%) · амп. 1 мл',10,'мг',1)],
+ regs:[{id:'svt',label:'Пароксизм наджелудочковой тахикардии',route:'в/в струйно быстро, затем промыть 0,9% NaCl',a:{fix:[10,20]},freq:'эффект через 30–40 с; при необходимости повтор через 2–3 мин'}],cNo:KIDS,
+ notes:[['warn','Под контролем ЭКГ: возможна кратковременная асистолия. Противопоказан в острый период инфаркта миокарда.']]},
+{id:'azamethonium',name:'Азаметония бромид',brands:'Пентамин',g:'cv',src:[['Азаметония бромид — описание вещества',AS('azametoniia-bromid-1538')]],
+ forms:[amp('a1','50 мг/мл (5%) · амп. 1 мл',50,'мг',1),amp('a2','50 мг/мл (5%) · амп. 2 мл',50,'мг',2)],
+ regs:[{id:'iv',label:'Криз, отёк лёгких или мозга, в/в',route:'в/в медленно, разведя в 20 мл 0,9% NaCl или 5% глюкозы',a:{ml:[0.2,0.5]},freq:'под контролем АД, лёжа'},
+       {id:'im',label:'В/м',route:'в/м',a:{fix:[50,100]},max:'разовая 150 мг, суточная 450 мг'}],cNo:KIDS,
+ notes:[['info','Противопоказан при гипотензии, инфаркте миокарда, закрытоугольной глаукоме, почечной и печёночной недостаточности.']]},
+{id:'esmolol',name:'Эсмолол',brands:'Бревиблок',g:'cv',src:[['Эсмолол — описание вещества',AS('esmolol-2301')]],
+ forms:[amp('a','10 мг/мл · флакон 10 мл (100 мг)',10,'мг',10)],
+ regs:[{id:'load',label:'Нагрузочная доза',route:'в/в за 1 мин',a:{kg:[0.5,0.5]},freq:'далее поддерживающая инфузия'},
+       {id:'inf',label:'Поддерживающая инфузия',route:'в/в через перфузор',inf:{rate:[50,300],ru:'мкг/кг/мин',mix:{amt:100,ml:10},neat:true},freq:'старт 50 мкг/кг/мин; повторять нагрузку и увеличивать на 50 мкг/кг/мин каждые 4–10 мин до эффекта'}],cNo:KIDS,
+ notes:[['info','Противопоказан при брадикардии < 45, AV-блокаде II–III степени, кардиогенном шоке, гипотензии.']]},
+{id:'hydrocortisone',name:'Гидрокортизон',brands:'Солу-Кортеф',g:'topic',src:[['Солу-Кортеф — инструкция',DR('solu-kortef-2808')],['Гидрокортизон — описание вещества',AS('gidrokortizon-69')]],
+ forms:[vial('v','Флакон 100 мг',100,'мг')],
+ regs:[{id:'em',label:'Неотложные состояния',route:'в/в: 100 мг за 30 с, 500 мг — за 10 мин',a:{fix:[100,500]},c:{fn(p,r){const hi=15*p.w;r.trace.push(`Детям: не меньше 25 мг в сутки и не больше 15 мг/кг = ${fU(hi,'мг')}`);return[Math.min(25,hi),hi];}},freq:'повтор каждые 2–6 ч по состоянию'}],
+ notes:[['info','При кратковременном применении по жизненным показаниям единственное противопоказание — гиперчувствительность.']]},
+{id:'suxamethonium',name:'Суксаметоний',brands:'Листенон, Дитилин',g:'anest',src:[['Суксаметония хлорид — описание вещества',AS('suksametoniia-xlorid-565')],['Листенон',DR('listenon-1836')]],
+ forms:[amp('a','20 мг/мл · амп. 5 мл (100 мг)',20,'мг',5)],
+ regs:[{id:'iv',label:'Интубация, в/в',route:'в/в',a:{kg:[0.6,1.1]},c:{kg:[1,2]},freq:'повторно не вводить'},
+       {id:'im',label:'В/м (нет венозного доступа)',route:'в/м',a:{kg:[3,4],max:150},c:{kg:[2.5,2.5],max:150}}],
+ notes:[['warn','Только при возможности ИВЛ. Противопоказан при миастении, дефиците псевдохолинэстеразы, гиперкалиемии; у детей — только в крайней необходимости.']]},
+{id:'pipecuronium',name:'Пипекурония бромид',brands:'Ардуан',g:'anest',src:[['Пипекурония бромид — описание вещества',AS('pipekuroniia-bromid-207')]],
+ srcNote:'В РЛС доза индивидуальна. Ориентиры — по инструкции Ардуана (страница в РЛС недоступна).',
+ age:{m:3,msg:'Детям до 3 месяцев дозы не определены.'},
+ forms:[vial('v','Флакон 4 мг',4,'мг')],
+ regs:[{id:'int',label:'Интубация',route:'в/в',a:{kg:[0.07,0.085]},c:{kg:[0.08,0.09]}},
+       {id:'mnt',label:'Поддерживающая доза',route:'в/в',a:{kg:[0.01,0.02]},c:{kg:[0.01,0.02]}}],
+ liver:['stop','Тяжёлая печёночная недостаточность — противопоказан.'],
+ notes:[['warn','Только при возможности ИВЛ.']]},
+{id:'midazolam',name:'Мидазолам',brands:'Дормикум',g:'neuro',src:[['Мидазолам — описание вещества',AS('midazolam-555')]],
+ srcNote:'В РЛС доза индивидуальна. Ориентиры — по инструкции Дормикума; пожилым и ослабленным меньше.',
+ forms:[amp('a1','5 мг/мл · амп. 1 мл',5,'мг',1),amp('a3','5 мг/мл · амп. 3 мл',5,'мг',3)],
+ regs:[{id:'sed',label:'Седация, в/в',route:'в/в медленно, титровать по 1 мг',a:{fn(p,r){if(p.ageY>=60){r.trace.push('Старше 60 лет: начальная 0,5–1 мг');return[0.5,1];}r.trace.push('Начальная 2–2,5 мг за 2–3 мин');return[2,2.5];}},c:{kg:[0.05,0.1]}},
+       {id:'pre',label:'Премедикация, в/м',route:'в/м за 20–60 мин до анестезии',a:{fn(p,r){const k=p.ageY>=60?[0.025,0.05]:[0.07,0.1];r.trace.push(`${rng(k[0],k[1],3)} мг/кг × ${nf(p.w,1)} кг`);return[k[0]*p.w,k[1]*p.w];}},c:{kg:[0.08,0.2]}},
+       {id:'ind',label:'Индукция анестезии',route:'в/в медленно',a:{kg:[0.15,0.2],t:'после премедикации'},c:{stop:'У детей индукция мидазоламом — по назначению анестезиолога.'}}],
+ preg:{t1:['stop','I триместр беременности — противопоказан.'],lact:['stop','Грудное вскармливание — противопоказан.']},
+ notes:[['warn','Риск угнетения дыхания — держите наготове флумазенил и средства ИВЛ.']]},
+{id:'acetylcysteine_inj',name:'Ацетилцистеин (раствор)',brands:'АЦЦ инъект, Флуимуцил',g:'resp',src:[['Ацетилцистеин — описание вещества',AS('acetilcistein-25')]],
+ forms:[amp('a','100 мг/мл (10%) · амп. 3 мл',100,'мг',3)],
+ regs:[{id:'p',label:'Муколитик, в/в или в/м',route:'в/в медленно или в/м',a:{fix:[300,300]},c:{fn(p,r){if(p.ageY>=6){r.trace.push('6–14 лет: 150 мг 1 раз в сутки');return[150,150];}r.trace.push(`До 6 лет: 10 мг/кг × ${nf(p.w,1)} кг (предпочтительно внутрь)`);return[10*p.w,10*p.w];}},adultY:14,freq:'1 раз в сутки'}],
+ extra(p,r){if(p.ageY<1)r.msgs.push({lvl:'warn',t:'Детям до 1 года в/в — только по жизненным показаниям в стационаре.'});},
+ notes:[['info','Противопоказан при обострении язвы желудка. Не сочетать с противокашлевыми.']]},
+{id:'flumazenil',name:'Флумазенил',brands:'Анексат',g:'other',src:[['Флумазенил — описание вещества',AS('flumazenil-2072')],['Анексат',DR('aneksat-7221')]],
+ forms:[amp('a','0,1 мг/мл · амп. 5 мл',0.1,'мг',5)],
+ regs:[{id:'an',label:'После анестезии',route:'в/в за 15 с',a:{fix:[0.2,0.2]},freq:'при необходимости по 0,1 мг каждые 60 с',max:'суммарно 1 мг (обычно 0,3–0,6 мг)'},
+       {id:'icu',label:'Отравление бензодиазепинами',route:'в/в',a:{fix:[0.3,0.3]},freq:'повтор каждые 60 с',max:'суммарно до 2 мг'}],cNo:KIDS,
+ notes:[['warn','Противопоказан при отравлении трициклическими антидепрессантами и у получающих бензодиазепины по жизненным показаниям (эпистатус, внутричерепная гипертензия).']]}
+];
+['propofol','ketamine','thiopental'].forEach(id=>{const d=ANEST.find(x=>x.id===id);d.sg='anest';REANIM.push(d);});
+
+/* ================= Экстренная карточка по массе (ERC 2021 / НСР, APLS) ================= */
+function half(v){return Math.floor(v*2+1e-9)/2;}
+function estWeight(p){if(p.ageM<12)return p.ageM/2+4;const y=Math.floor(p.ageY);if(y<=5)return 2*y+8;if(y<=12)return 3*y+7;return null;}
+function vitalsRow(p){
+  const y=p.ageY;
+  const T=[[1,'до 1 года','110–160','30–40','80–90'],[2,'1–2 года','100–150','25–35','85–95'],[5,'2–5 лет','95–140','25–30','85–100'],[12,'5–12 лет','80–120','20–25','90–110'],[Infinity,'старше 12 лет','60–100','15–20','100–120']];
+  const r=T.find(x=>y<x[0]);
+  const hyp=p.ageM<1?'< 60':y<1?'< 70':y<=10?`< ${70+2*Math.floor(y)}`:'< 90';
+  return{label:r[1],hr:r[2],rr:r[3],sbp:r[4],hyp};
+}
+function lmaSize(w){const T=[[5,'1'],[10,'1,5'],[20,'2'],[30,'2,5'],[50,'3'],[70,'4'],[100,'5'],[Infinity,'6']];return T.find(x=>w<x[0]||(x[0]===Infinity))[1];}
+function renderCard(p){
+  const el=$('#cardResult');
+  if(!p.ok){el.innerHTML='<div class="empty"><h2>Экстренная карточка</h2><p>Укажите возраст и вес пациента — здесь появятся размеры оборудования, энергия разряда и дозы для реанимации.</p></div>';return;}
+  const w=p.w,y=p.ageY,child=y<18,who=`${ageText(p)} · ${p.sex==='m'?'муж.':'жен.'} · ${nf(w,1)} кг${p.h?` · ${nf(p.h,0)} см`:''}`;
+  const row=(k,v,s,tot)=>`<div class="row${tot?' total':''}"><span class="k">${k}</span><span class="v">${v}</span><span class="s">${s||''}</span></div>`;
+  const msgs=[];
+  const ew=estWeight(p);
+  if(ew&&Math.abs(w-ew)/ew>0.3)msgs.push({lvl:'warn',t:`Масса ${nf(w,1)} кг заметно отличается от ориентира по возрасту (${fU(ew,'кг')}). Проверьте вес: все дозы ниже считаются от него.`});
+  /* дыхательные пути */
+  let ett,depth,blade;
+  if(p.ageM<1){ett='3,0–3,5';depth=`${fN(w+6)} см (масса + 6)`;blade='прямой № 0–1';}
+  else if(y<1){ett='3,5–4,0 без манжеты / 3,0–3,5 с манжетой';depth='≈ 3 × внутренний диаметр трубки';blade='прямой № 1';}
+  else if(y<14){const u=half(y/4+4),c=half(y/4+3.5);ett=`${nf(c)} с манжетой / ${nf(u)} без манжеты`;depth=`${fN(y/2+12)} см у угла рта`;blade=y<2?'прямой № 1 или Macintosh 1':y<8?'Macintosh 2':'Macintosh 2–3';}
+  else{ett=p.sex==='f'?'7,0–7,5':'7,5–8,0';depth=p.sex==='f'?'≈ 21 см у угла рта':'≈ 23 см у угла рта';blade='Macintosh 3–4';}
+  const air=[row('Интубационная трубка',ett,y>=1&&y<14?'внутренний диаметр, мм; по ERC предпочтительнее с манжетой':'внутренний диаметр, мм'),row('Глубина установки',depth,''),row('Клинок ларингоскопа',blade,''),row('Ларингеальная маска',`№ ${lmaSize(w)}`,'по массе тела')];
+  /* электричество */
+  const defib=child?Math.min(4*w,200):null;
+  const el1=[child?row('Дефибрилляция',`${fN(defib)} Дж`,`4 Дж/кг${4*w>200?' → не выше взрослой дозы':''}; без нарастания энергии`):row('Дефибрилляция','150–200 Дж','бифазный; далее 150–360 Дж по типу аппарата'),
+    child?row('Кардиоверсия',`${fN(Math.min(w,120))} → ${fN(Math.min(2*w,200))} Дж`,'1 Дж/кг, затем 2 Дж/кг, синхронизированный разряд'):row('Кардиоверсия','120–150 Дж','ФП; трепетание и НЖТ — 70–120 Дж, синхронизированный разряд')];
+  /* препараты */
+  const adr=child?Math.min(0.01*w,1):1, amio=child?Math.min(5*w,300):300, atr=child?Math.min(Math.max(0.02*w,0.1),0.5):0.5;
+  const glu=child?0.2*w:null, bol=child?10*w:500, diaz=child?Math.min(0.3*w,10):10, nal=child?Math.min(0.01*w,0.4):0.4, ca=child?Math.min(0.5*w,20):10, bic=child?2*w:null, anaph=child?Math.min(0.01*w,y<12?0.3:0.5):0.5;
+  const drugs=[
+    row('Адреналин (СЛР)',fU(adr,'мг'),child?`${volTxt(adr/0.1)} мл раствора 0,1 мг/мл (1 мг развести до 10 мл); каждые 3–5 мин`:'1 мл 0,1%; каждые 3–5 мин'),
+    row('Амиодарон (ФЖ/ЖТ без пульса)',fU(amio,'мг'),`${volTxt(amio/50)} мл раствора 50 мг/мл после 3-го разряда; затем ${child?fU(amio,'мг'):'150 мг'} после 5-го`),
+    row('Адреналин в/м (анафилаксия)',fU(anaph,'мг'),`${volTxt(anaph)} мл 0,1% в бедро; повтор через 5 мин`),
+    row('Атропин (вагусная брадикардия)',fU(atr,'мг'),child?`${volTxt(atr)} мл 0,1%; 0,02 мг/кг, мин. 0,1 мг, макс. 0,5 мг`:`${volTxt(atr)} мл 0,1%; повтор каждые 3–5 мин до 3 мг`),
+    row('Болюс кристаллоида',fU(bol,'мл'),child?'10 мл/кг 0,9% NaCl или сбалансированного раствора; оценить и повторить':'500 мл, оценить и повторить'),
+    child?row('Глюкоза (гипогликемия)',fU(glu,'г'),`${volTxt(glu/0.1)} мл 10% (= ${volTxt(glu/0.4)} мл 40% + ${volTxt(glu/0.1-glu/0.4)} мл воды или NaCl)`):row('Глюкоза (гипогликемия)','8–16 г','20–40 мл 40% в/в медленно'),
+    row('Диазепам (судороги)',fU(diaz,'мг'),child?`${volTxt(diaz/5)} мл 0,5% в/в; 0,3 мг/кг, не более 10 мг`:'2 мл 0,5% в/в; повтор через 10–15 мин'),
+    row('Налоксон (опиоиды)',fU(nal,'мг'),child?`${volTxt(nal/0.4)} мл раствора 0,4 мг/мл; 0,01 мг/кг`:'1 мл 0,04%; повтор каждые 2–3 мин'),
+    row('Кальция глюконат 10%',fU(ca,'мл'),child?'0,5 мл/кг (макс. 20 мл) в/в медленно — гиперкалиемия, гипокальциемия':'10 мл в/в медленно'),
+    bic?row('Натрия гидрокарбонат 4%',fU(bic,'мл'),'≈ 1 ммоль/кг — гиперкалиемия, отравление ТЦА; рутинно при СЛР не вводят'):''
+  ].join('');
+  const v=vitalsRow(p);
+  const vit=[row('ЧСС',`${v.hr} в мин`,v.label),row('ЧДД',`${v.rr} в мин`,''),row('САД',`${v.sbp} мм рт. ст.`,`гипотензия: ${v.hyp}`)];
+  if(ew)vit.push(row('Ориентир массы по возрасту',fU(ew,'кг'),'APLS: (мес/2)+4; 1–5 лет 2×возраст+8; 6–12 лет 3×возраст+7'));
+  const sec=(t,rows)=>`<h3 class="card-h">${t}</h3><div class="rows">${rows.join?rows.join(''):rows}</div>`;
+  el.innerHTML=`<div class="res-head"><div><div class="eyebrow">${child?'Ребёнок':'Взрослый'}</div><h2>Экстренная карточка</h2><div class="who">${who}</div></div><div class="pills"><span class="pill plain">ERC 2021 · НСР</span></div></div>
+  <div class="res-body">${msgs.length?`<ul class="msgs">${msgs.map(msgHTML).join('')}</ul>`:''}
+  ${sec('Дыхательные пути',air)}${sec('Разряд',el1)}${sec('Препараты для реанимации',drugs)}${sec('Нормы для возраста',vit)}
+  <div class="src"><div><span class="lbl">Источник</span>Рекомендации Европейского совета по реанимации (ERC 2021) и Национального совета по реанимации; нормы и ориентир массы — APLS.</div><p>Атропин здесь — 0,02 мг/кг (ERC); в РЛС для детей указано 10 мкг/кг, этот расчёт — во вкладке СМП. Карточка — шпаргалка: дозы проверяйте по ситуации.</p></div></div>`;
+}
+
 
 /* ================= Вкладки-укладки (СМП, анестезиология) ================= */
 function makeKit(key,list,groups,def){return{key,list,groups,st:{drug:def,form:{},reg:{},built:null,builtReg:null},copy:''};}
 const KITS={smp:makeKit('smp',SMP,SMP_GROUPS,'epinephrine'),anest:makeKit('anest',ANEST,ANEST_GROUPS,'propofol')};
+KITS.smp.variant='gen';
+function setSmpVariant(v){
+  const K=KITS.smp;K.variant=v;K.list=v==='rean'?SMP.concat(REANIM):SMP;
+  if(!K.list.find(d=>d.id===K.st.drug))K.st.drug='epinephrine';
+  $('#smpH').textContent=v==='rean'?'Укладка специализированная (реанимационная)':'Укладка общепрофильная СМП';
+  K.st.built=null;renderKitDrugs(K);filterKit(K);render();
+}
 const E=(K,s)=>document.getElementById(K.key+s);
 function renderKitDrugs(K){
   E(K,'Drugs').innerHTML=K.groups.map(g=>`<div class="dgroup" data-g="${g.id}"><div class="gname">${g.name}</div><div class="drow">${
-    K.list.filter(d=>(d.ag||d.g)===g.id||(K.key==='anest'&&d.agMap===g.id)).map(d=>`<button type="button" class="drug" data-id="${d.id}" data-s="${(d.name+' '+(d.brands||'')).toLowerCase()}" aria-pressed="${d.id===K.st.drug}"><span class="dn">${d.name}</span><small>${d.brands||d.forms[0].label}</small></button>`).join('')
+    K.list.filter(d=>(K.key==='anest'?(d.agMap||d.g):(d.sg||d.g))===g.id).map(d=>`<button type="button" class="drug" data-id="${d.id}" data-s="${(d.name+' '+(d.brands||'')).toLowerCase()}" aria-pressed="${d.id===K.st.drug}"><span class="dn">${d.name}</span><small>${d.brands||d.forms[0].label}</small></button>`).join('')
   }</div></div>`).join('')+`<p class="nores" id="${K.key}Nores" hidden>Такого препарата нет в этой вкладке.</p>`;
   const c=E(K,'Cnt');if(c)c.textContent=K.list.length;
 }
@@ -2347,7 +2530,7 @@ function renderKit(K,p){
   const {f,reg}=syncKitOptions(K,d);
   const el=E(K,'Result');
   const who=p.ok?`${ageText(p)} · ${p.sex==='m'?'муж.':'жен.'} · ${nf(p.w,1)} кг${p.h?` · ${nf(p.h,0)} см`:''}`:'';
-  const gid=K.key==='anest'?(d.agMap||d.g):d.g;
+  const gid=K.key==='anest'?(d.agMap||d.g):(d.sg||d.g);
   const grp=(K.groups.find(g=>g.id===gid)||{name:''}).name;
   const srcHTML=`<div class="src"><div><span class="lbl">Источник</span>${d.src.map(s=>`<a href="${s[1]}" target="_blank" rel="noopener">${s[0]}</a>`).join(' · ')} — РЛС</div>${d.srcNote?`<p>${d.srcNote}</p>`:''}</div>`;
   const head=status=>`<div class="res-head"><div><div class="eyebrow">${grp}</div><h2>${d.name}</h2>${d.brands?`<div class="brands">${d.brands}</div>`:''}${who?`<div class="who">${who}</div>`:''}</div><div class="pills">${status?`<span class="pill ${status[0]}">${status[1]}</span>`:''}<span class="pill plain">${f.label}</span></div></div>`;
@@ -2407,10 +2590,10 @@ function renderKit(K,p){
   html+=srcHTML+'</div>';
   el.innerHTML=html;
 }
-const TABS=['main','smp','anest'];
+const TABS=['main','smp','anest','card'];
 function setTab(t){
   curTab=TABS.includes(t)?t:'main';
-  $('#paneMain').hidden=curTab!=='main';$('#paneSmp').hidden=curTab!=='smp';$('#paneAnest').hidden=curTab!=='anest';
+  $('#paneMain').hidden=curTab!=='main';$('#paneSmp').hidden=curTab!=='smp';$('#paneAnest').hidden=curTab!=='anest';$('#paneCard').hidden=curTab!=='card';
   document.querySelectorAll('.tabs [data-tab]').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.tab===curTab)));
   const want=curTab==='main'?'':'#'+curTab;
   if(location.hash!==want){try{history.replaceState(null,'',want||location.pathname+location.search);}catch(e){}}
@@ -2422,10 +2605,11 @@ document.addEventListener('input',e=>{
   const id=e.target.id;
   if(id==='drugQ'){filterDrugs();return;}
   if(id==='smpQ'||id==='anestQ'){filterKit(KITS[id.slice(0,-1)]);return;}
-  if(e.target.closest('.panel')&&!e.target.matches('[name=form],[name=mode],[name=smpForm],[name=smpReg],[name=anestForm],[name=anestReg]'))render();
+  if(e.target.closest('.panel')&&!e.target.matches('[name=form],[name=mode],[name=smpForm],[name=smpReg],[name=anestForm],[name=anestReg],[name=smpVar]'))render();
 });
 document.addEventListener('change',e=>{
   const t=e.target,m=/^(smp|anest)(Form|Reg)$/.exec(t.name||'');
+  if(t.name==='smpVar'){setSmpVariant(t.value);return;}
   if(m){const K=KITS[m[1]];(m[2]==='Form'?K.st.form:K.st.reg)[K.st.drug]=t.value;render();}
   else if(t.name==='form'){state.form[state.drug]=t.value;render();}
   else if(t.name==='mode'){state.mode[state.drug]=t.value;render();}

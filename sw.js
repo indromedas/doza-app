@@ -1,6 +1,6 @@
 /* Офлайн-кэш калькулятора дозировок.
    При каждом обновлении калькулятора увеличивайте VERSION — старый кэш удалится. */
-const VERSION = 'doza-v2';
+const VERSION = 'doza-v3';
 const CORE = ['./', 'index.html', 'manifest.webmanifest', 'icon-180.png', 'icon-192.png', 'icon-512.png'];
 const EXT = /^https:\/\/(fonts\.googleapis\.com|fonts\.gstatic\.com|telegram\.org)\//;
 
