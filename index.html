@@ -215,6 +215,9 @@ details.trace ol{margin:10px 0 0;padding-left:22px;display:grid;gap:4px;font:13p
 .info-text{font-size:14.5px;line-height:1.55;margin:0}
 .linkbtn{font:600 14px var(--font-ui);border:1px solid var(--accent);background:var(--accent-soft);color:var(--accent);border-radius:8px;padding:9px 14px;cursor:pointer;justify-self:start}
 .chips.regs label{border-radius:8px}
+.fav{font:600 12.5px var(--font-ui);border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:999px;padding:4px 10px;cursor:pointer;white-space:nowrap}
+.fav[aria-pressed="true"]{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 45%,transparent);background:var(--warn-soft)}
+a.copy{text-decoration:none;display:inline-flex;align-items:center}
 .card-h{margin:6px 0 -6px;font-size:12px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
 
 footer{border-top:1px solid var(--line);padding-block:20px 36px;color:var(--muted);font-size:13px;display:grid;gap:8px;max-width:80ch}
@@ -240,7 +243,9 @@ footer b{color:var(--ink);font-weight:600}
     <button type="button" role="tab" id="tabMain" data-tab="main" aria-selected="true">Амбулаторные формы <span class="cnt" id="mainCnt">33</span></button>
     <button type="button" role="tab" id="tabSmp" data-tab="smp" aria-selected="false">СМП · укладка 1165н <span class="cnt" id="smpCnt">85</span></button>
     <button type="button" role="tab" id="tabAnest" data-tab="anest" aria-selected="false">Анестезиология <span class="cnt" id="anestCnt">12</span></button>
+    <button type="button" role="tab" id="tabAbx" data-tab="abx" aria-selected="false">Антибиотики в/в <span class="cnt" id="abxCnt">9</span></button>
     <button type="button" role="tab" id="tabCard" data-tab="card" aria-selected="false">Экстренная карточка</button>
+    <button type="button" role="tab" id="tabScales" data-tab="scales" aria-selected="false">Шкалы</button>
   </nav>
 
   <main class="layout">
@@ -342,6 +347,19 @@ footer b{color:var(--ink);font-weight:600}
       </div>
       <div class="panel result" id="anestResult" aria-live="polite"></div>
      </div>
+     <div class="work-pane" id="paneAbx" hidden>
+      <div class="panel" aria-labelledby="abxH">
+        <div class="ph"><h2 id="abxH">Антибиотики в/в</h2><span>Стационар; доза с учётом функции почек</span></div>
+        <div class="inbox search"><input id="abxQ" type="search" autocomplete="off" placeholder="Препарат: цефазолин, меропенем, ванкомицин…" aria-label="Поиск антибиотика"></div>
+        <div class="dgroups" id="abxDrugs"></div>
+        <div class="opts">
+          <div class="field"><span class="lbl" id="abxFormLbl">Форма</span><div class="chips" id="abxForms" role="radiogroup" aria-labelledby="abxFormLbl"></div></div>
+          <div class="field" id="abxRegRow" hidden><span class="lbl" id="abxRegLbl">Показание</span><div class="chips regs" id="abxRegs" role="radiogroup" aria-labelledby="abxRegLbl"></div></div>
+        </div>
+      </div>
+      <div class="panel result" id="abxResult" aria-live="polite"></div>
+     </div>
+     <div class="work-pane" id="paneScales" hidden><div class="work-pane" id="scalesForm"></div></div>
      <div class="work-pane" id="paneCard" hidden>
       <div class="panel result" id="cardResult" aria-live="polite"></div>
      </div>
@@ -373,6 +391,7 @@ footer b{color:var(--ink);font-weight:600}
     <p><b>Вкладка СМП.</b> Состав — укладка общепрофильная по приказу Минздрава России от 28.10.2020 № 1165н. Дозы — из РЛС; где в РЛС схемы нет, они взяты из инструкции производителя или клинических рекомендаций, и в карточке это отмечено. Концентрации ампул — стандартные российские формы: сверяйте с ампулой в руках.</p>
     <p><b>Вкладка «Анестезиология».</b> Только для врача анестезиолога-реаниматолога при возможности ИВЛ и мониторинга. Дозы — РЛС и инструкции препаратов; рокуроний при ожирении считается по идеальной массе, сугаммадекс — по фактической.</p>
     <p><b>Экстренная карточка.</b> Размеры оборудования, энергия разряда и дозы для реанимации по массе — по рекомендациям ERC 2021 и Национального совета по реанимации; нормы и ориентир массы — APLS.</p>
+    <p><b>Антибиотики в/в и шкалы.</b> Дозы антибиотиков — РЛС и инструкции производителей с коррекцией по клиренсу креатинина. Шкалы: Глазго, qSOFA (Sepsis-3), NEWS2 (Royal College of Physicians). Избранное хранится только на этом устройстве.</p>
     <p><b>Формулы.</b> Площадь поверхности тела — Мостеллер; идеальная масса — Devine; клиренс креатинина — Кокрофт–Голт (с 18 лет, по идеальной или скорректированной массе); СКФ у детей 1–17 лет — формула Шварца у постели больного.</p>
     <p><b>Ограничения.</b> Калькулятор не проверяет аллергии, сопутствующие болезни и взаимодействия. При подозрении на передозировку звоните 103 или 112.</p>
   </footer>
@@ -1576,7 +1595,7 @@ const cur=()=>DRUGS.find(d=>d.id===state.drug);
 function defaultForm(d,p){const adult=p.ok&&p.ageY>=12&&p.w>=40;return adult?d.def.adult:d.def.child;}
 
 function renderDrugs(){
-  $('#drugs').innerHTML=GROUPS.map(g=>`<div class="dgroup" data-g="${g.id}"><div class="gname">${g.name}</div><div class="drow">${
+  $('#drugs').innerHTML=favHTML('main',DRUGS)+GROUPS.map(g=>`<div class="dgroup" data-g="${g.id}"><div class="gname">${g.name}</div><div class="drow">${
     DRUGS.filter(d=>d.group===g.id).map(d=>`<button type="button" class="drug" data-id="${d.id}" data-s="${(d.name+' '+d.brands).toLowerCase()}" aria-pressed="${d.id===state.drug}"><span class="dn">${d.name}${d.rx?'<span class="rxtag" title="Рецептурный">Rx</span>':''}</span><small>${d.brands}</small></button>`).join('')
   }</div></div>`).join('')+'<p class="nores" id="nores" hidden>Такого препарата пока нет в калькуляторе.</p>';
 }
@@ -1615,7 +1634,7 @@ let curTab='main';
 function render(){
   const p=readPatient();
   renderMetrics(p);
-  if(KITS[curTab])renderKit(KITS[curTab],p);else if(curTab==='card')renderCard(p);else renderMain(p);
+  if(KITS[curTab])renderKit(KITS[curTab],p);else if(curTab==='card')renderCard(p);else if(curTab==='scales')renderScales(p);else renderMain(p);
 }
 function renderMain(p){
   const d=cur();
@@ -1657,7 +1676,7 @@ function renderMain(p){
 
   const who=`${ageText(p)} · ${p.sex==='m'?'муж.':'жен.'} · ${nf(p.w,1)} кг${p.h?` · ${nf(p.h,0)} см`:''}`;
   let html=`<div class="res-head"><div><div class="eyebrow">${d.cls}</div><h2>${d.name}</h2><div class="brands">${d.brands}</div><div class="who">${who}</div></div>
-    <div class="pills"><span class="pill ${status[0]}">${status[1]}</span><span class="pill plain">${d.rx?'По рецепту':'Без рецепта'}</span></div></div><div class="res-body">`;
+    <div class="pills">${favBtn('main',d.id)}<span class="pill ${status[0]}">${status[1]}</span><span class="pill plain">${d.rx?'По рецепту':'Без рецепта'}</span></div></div><div class="res-body">`;
 
   lastCopy='';
   if(!stopped&&c){
@@ -1695,7 +1714,7 @@ function renderMain(p){
     html+=`<div class="label-card" aria-label="Схема приёма">
       <div class="ln"><span class="k">Rp.:</span><span>${rpText}</span></div>
       <div class="ln"><span class="k">S.:</span><span>${sText}</span></div>
-      <div class="foot"><span class="copied" id="copied" aria-live="polite"></span><button type="button" class="copy" id="copyBtn">Скопировать схему</button></div>
+      <div class="foot"><span class="copied" id="copied" aria-live="polite"></span>${tgShare(lastCopy)}<button type="button" class="copy" id="copyBtn">Скопировать схему</button></div>
     </div>`;
 
     const conv=form.kind==='liquid'
@@ -2435,8 +2454,8 @@ function setSmpVariant(v){
 }
 const E=(K,s)=>document.getElementById(K.key+s);
 function renderKitDrugs(K){
-  E(K,'Drugs').innerHTML=K.groups.map(g=>`<div class="dgroup" data-g="${g.id}"><div class="gname">${g.name}</div><div class="drow">${
-    K.list.filter(d=>(K.key==='anest'?(d.agMap||d.g):(d.sg||d.g))===g.id).map(d=>`<button type="button" class="drug" data-id="${d.id}" data-s="${(d.name+' '+(d.brands||'')).toLowerCase()}" aria-pressed="${d.id===K.st.drug}"><span class="dn">${d.name}</span><small>${d.brands||d.forms[0].label}</small></button>`).join('')
+  E(K,'Drugs').innerHTML=favHTML(K.key,K.list)+K.groups.map(g=>`<div class="dgroup" data-g="${g.id}"><div class="gname">${g.name}</div><div class="drow">${
+    K.list.filter(d=>(K.key==='anest'?(d.agMap||d.g):K.key==='abx'?(d.xg||d.g):(d.sg||d.g))===g.id).map(d=>`<button type="button" class="drug" data-id="${d.id}" data-s="${(d.name+' '+(d.brands||'')).toLowerCase()}" aria-pressed="${d.id===K.st.drug}"><span class="dn">${d.name}</span><small>${d.brands||d.forms[0].label}</small></button>`).join('')
   }</div></div>`).join('')+`<p class="nores" id="${K.key}Nores" hidden>Такого препарата нет в этой вкладке.</p>`;
   const c=E(K,'Cnt');if(c)c.textContent=K.list.length;
 }
@@ -2499,6 +2518,7 @@ function smpCalc(d,f,reg,p){
 }
 function countRange(f,lo,hi){
   const step=f.div?0.5:1,e=1e-6;
+  if(f.kind==='vial')return[Math.max(1,Math.ceil(lo/f.c-e)),Math.max(1,Math.ceil(hi/f.c-e))];
   let a=Math.ceil(lo/f.c/step-e)*step,b=Math.floor(hi/f.c/step+e)*step;
   if(a>b+e){a=b=Math.max(step,Math.round(hi/f.c/step)*step);}
   return[a,b];
@@ -2530,11 +2550,11 @@ function renderKit(K,p){
   const {f,reg}=syncKitOptions(K,d);
   const el=E(K,'Result');
   const who=p.ok?`${ageText(p)} · ${p.sex==='m'?'муж.':'жен.'} · ${nf(p.w,1)} кг${p.h?` · ${nf(p.h,0)} см`:''}`:'';
-  const gid=K.key==='anest'?(d.agMap||d.g):(d.sg||d.g);
+  const gid=K.key==='anest'?(d.agMap||d.g):K.key==='abx'?(d.xg||d.g):(d.sg||d.g);
   const grp=(K.groups.find(g=>g.id===gid)||{name:''}).name;
   const srcHTML=`<div class="src"><div><span class="lbl">Источник</span>${d.src.map(s=>`<a href="${s[1]}" target="_blank" rel="noopener">${s[0]}</a>`).join(' · ')} — РЛС</div>${d.srcNote?`<p>${d.srcNote}</p>`:''}</div>`;
-  const head=status=>`<div class="res-head"><div><div class="eyebrow">${grp}</div><h2>${d.name}</h2>${d.brands?`<div class="brands">${d.brands}</div>`:''}${who?`<div class="who">${who}</div>`:''}</div><div class="pills">${status?`<span class="pill ${status[0]}">${status[1]}</span>`:''}<span class="pill plain">${f.label}</span></div></div>`;
-  const cardCopy=txt=>`<div class="label-card"><div class="ln"><span class="k">S.:</span><span>${txt}</span></div><div class="foot"><span class="copied" id="${K.key}Copied" aria-live="polite"></span><button type="button" class="copy" id="${K.key}CopyBtn">Скопировать</button></div></div>`;
+  const head=status=>`<div class="res-head"><div><div class="eyebrow">${grp}</div><h2>${d.name}</h2>${d.brands?`<div class="brands">${d.brands}</div>`:''}${who?`<div class="who">${who}</div>`:''}</div><div class="pills">${favBtn(K.key,d.id)}${status?`<span class="pill ${status[0]}">${status[1]}</span>`:''}<span class="pill plain">${f.label}</span></div></div>`;
+  const cardCopy=txt=>`<div class="label-card"><div class="ln"><span class="k">S.:</span><span>${txt}</span></div><div class="foot"><span class="copied" id="${K.key}Copied" aria-live="polite"></span>${tgShare(d.name+': '+txt.replace(/<[^>]+>/g,''))}<button type="button" class="copy" id="${K.key}CopyBtn">Скопировать</button></div></div>`;
   K.copy='';
   if(!d.regs){
     el.innerHTML=head(null)+`<div class="res-body"><p class="info-text">${d.info}</p>${d.link?`<button type="button" class="linkbtn" id="${K.key}Link" data-link="${d.link}">Открыть расчёт во вкладке «Амбулаторные формы»</button>`:''}${srcHTML}</div>`;
@@ -2563,7 +2583,7 @@ function renderKit(K,p){
       amtTxt=`${vt} мл${f.kind==='neb'?'':' '+(r.dil?'разведённого раствора':'раствора '+f.label.split(' · ')[0])}`;
     }else if(f.kind==='tab'||f.kind==='puff'||f.kind==='vial'){
       const [a,b]=countRange(f,r.lo,r.hi);const pp=amtParts({kind:'unit',unit:f.kind==='tab'?'tab':f.kind==='puff'?'puff':'vial'},a,b);
-      fig2=`<div class="fig"><span class="lab">Количество</span><span class="val">${pp.num} <small>${pp.unit}</small></span><span class="sub ui">${f.label}</span></div>`;
+      fig2=`<div class="fig"><span class="lab">${f.kind==='vial'?'Вскрыть флаконов':'Количество'}</span><span class="val">${pp.num} <small>${pp.unit}</small></span><span class="sub ui">${f.label}</span></div>`;
       amtTxt=cntTxt(f,a,b);
     }else{fig2=`<div class="fig"><span class="lab">Форма</span><span class="val txt">${f.label}</span><span class="sub ui">&nbsp;</span></div>`;}
     html+=`<div class="figs"><div class="fig main"><span class="lab">Доза</span><span class="val">${doseNum} <small>${u}</small></span><span class="sub">${sub1}</span></div>${fig2}${how}</div>`;
@@ -2590,10 +2610,151 @@ function renderKit(K,p){
   html+=srcHTML+'</div>';
   el.innerHTML=html;
 }
-const TABS=['main','smp','anest','card'];
+/* ================= Антибиотики в/в (стационар) ================= */
+const ABX_GROUPS=[{id:'beta',name:'Бета-лактамы'},{id:'oth',name:'Другие классы'}];
+const crR=p=>p.crcl;
+const ABX=[
+{id:'cefazolin',name:'Цефазолин',g:'beta',src:[['Цефазолин — описание вещества',AS('cefazolin-118')]],
+ srcNote:'В РЛС режим определяет лечащий врач. Дозы — по инструкциям производителей и клиническим рекомендациям по периоперационной профилактике.',
+ age:{m:1,msg:'Недоношенным и новорождённым до 1 месяца — не применяют.'},adultY:0,
+ forms:[vial('v1','Флакон 1 г',1000,'мг'),vial('v2','Флакон 2 г',2000,'мг')],
+ regs:[{id:'proph',label:'Профилактика при операции',route:'в/в за 30–60 мин до разреза',a:{fn(p,r){if(p.ageY<18){const d=Math.min(30*p.w,2000);r.trace.push(`Детям: 30 мг/кг × ${nf(p.w,1)} кг = ${fU(30*p.w,'мг')}${30*p.w>2000?' → 2 г':''}`);return[d,d];}const d=p.w>=120?3000:2000;r.trace.push(p.w>=120?'Масса ≥ 120 кг: 3 г':'Взрослым: 2 г');return[d,d];}},freq:'повтор каждые 4 ч операции'},
+       {id:'tr',label:'Лечение инфекции',route:'в/в медленно или капельно, в/м',a:{fn(p,r){if(p.ageY<18){const lo=25*p.w/3,hi=Math.min(100*p.w/3,2000);r.trace.push(`Детям: 25–100 мг/кг в сутки в 3 введения → ${fUR(lo,hi,'мг')} на введение`);return[lo,hi];}r.trace.push('Взрослым: 1–2 г каждые 8 ч');return[1000,2000];}},freq:'каждые 8 ч'}],
+ extra(p,r){const c=crR(p);if(c!=null&&c<35)r.msgs.push({lvl:'warn',t:`${renalLabel(p)} ${c<11?'≤ 10: половина дозы каждые 18–24 ч':'11–34: половина дозы каждые 12 ч'}.`});},
+ notes:[['info','Противопоказан при тяжёлой аллергии на бета-лактамы.']]},
+{id:'ampicillin',name:'Ампициллин',g:'beta',src:[['Ампициллин — описание вещества',AS('ampicillin-139')]],
+ age:{m:1,msg:'Детям до 1 месяца не назначается.'},
+ forms:[vial('v05','Флакон 0,5 г',500,'мг'),vial('v1','Флакон 1 г',1000,'мг')],
+ regs:[{id:'mod',label:'Среднетяжёлая инфекция',route:'в/м или в/в',a:{fix:[500,500],t:'взрослым в/в 0,5 г'},c:{daily:[100,200],n:[6,4]},freq:'каждые 6 ч (детям — суточная доза в 4–6 введений)'},
+       {id:'sev',label:'Тяжёлая инфекция',route:'в/в или в/м',a:{fix:[1000,2000]},c:{daily:[100,200],n:[6,4]},freq:'каждые 4–6 ч'}],
+ extra(p,r){const c=crR(p);if(c!=null&&c<30)r.msgs.push({lvl:'warn',t:`${renalLabel(p)} < 30: интервал увеличивают до 8–12 ч.`});},
+ notes:[['info','Противопоказан при инфекционном мононуклеозе, лимфолейкозе, печёночной недостаточности, колите на фоне антибиотиков.']]},
+{id:'ampsulb',name:'Ампициллин + сульбактам',brands:'Уназин, Сультасин',g:'beta',src:[['Уназин — инструкция',DR('unazin-3139')]],
+ forms:[vial('v15','Флакон 1,5 г (1 г + 0,5 г)',1500,'мг'),vial('v3','Флакон 3 г (2 г + 1 г)',3000,'мг')],
+ regs:[{id:'tr',label:'Лечение инфекции',route:'в/в за 3 мин или инфузия 15–30 мин; в/м глубоко',a:{fix:[1500,3000]},c:{fn(p,r){const nb=p.ageM<1;const n=nb?2:4;const day=nb?75*p.w:150*p.w;r.trace.push(nb?`Первая неделя жизни: 75 мг/кг в сутки в 2 введения (позже — 150 мг/кг)`:`150 мг/кг в сутки (сумма ампициллина и сульбактама) × ${nf(p.w,1)} кг = ${fU(day,'мг')} → на 4 введения`);return[day/n,day/n];}},freq:'каждые 6–8 ч',max:'не более 4 г сульбактама в сутки (12 г препарата)'}],
+ extra(p,r){const c=crR(p);if(c!=null&&c<30)r.msgs.push({lvl:'warn',t:`${renalLabel(p)} < 30: интервал увеличивают (15–29 — каждые 12 ч, 5–14 — каждые 24 ч).`});},
+ notes:[['info','Доза указана суммарно (ампициллин + сульбактам). Противопоказан при тяжёлой аллергии на бета-лактамы.']]},
+SMPd('ceftriaxone'),
+ANEST.find(x=>x.id==='cefepime'),
+{id:'meropenem',name:'Меропенем',brands:'Меронем',g:'beta',src:[['Меропенем — описание вещества',AS('meropenem-760')],['Меронем',DR('meronem-1944')]],
+ srcNote:'Взрослые дозы — РЛС. Детские (10–40 мг/кг) и коррекция по функции почек — по инструкции Меронема.',
+ age:{m:3,msg:'Детям до 3 месяцев — по назначению неонатолога.'},
+ forms:[vial('v05','Флакон 0,5 г',500,'мг'),vial('v1','Флакон 1 г',1000,'мг')],
+ regs:[{id:'std',label:'Тяжёлая инфекция',route:'в/в инфузия 15–30 мин или болюс за 5 мин',a:{fix:[500,1000]},c:{fn(p,r){if(p.w>50){r.trace.push('Масса > 50 кг — взрослая доза');return[500,1000];}r.trace.push(`10–20 мг/кг × ${nf(p.w,1)} кг`);return[10*p.w,20*p.w];}},freq:'каждые 8 ч'},
+       {id:'men',label:'Менингит',route:'в/в инфузия',a:{fix:[2000,2000]},c:{fn(p,r){if(p.w>50){r.trace.push('Масса > 50 кг — 2 г');return[2000,2000];}r.trace.push(`40 мг/кг × ${nf(p.w,1)} кг`);return[40*p.w,40*p.w];}},freq:'каждые 8 ч'}],
+ extra(p,r){const c=crR(p);if(c!=null&&c<=50)r.msgs.push({lvl:'warn',t:`${renalLabel(p)} ${c<10?'< 10: половина дозы каждые 24 ч':c<=25?'10–25: половина дозы каждые 12 ч':'26–50: полная доза каждые 12 ч'}.`});},
+ notes:[['info','Противопоказан при анафилаксии на бета-лактамы. Снижает концентрацию вальпроевой кислоты.']]},
+{id:'vancomycin',name:'Ванкомицин',g:'oth',src:[['Ванкомицин — описание вещества',AS('vankomicin-348')]],
+ srcNote:'В РЛС режим зависит от показания. Дозы 15–20 мг/кг (детям 15 мг/кг каждые 6 ч) — по инструкциям производителей и клиническим рекомендациям; дальше — по концентрации в крови.',
+ forms:[vial('v05','Флакон 0,5 г',500,'мг'),vial('v1','Флакон 1 г',1000,'мг')],
+ regs:[{id:'std',label:'Тяжёлая инфекция',route:'в/в инфузия не быстрее 10 мг/мин (не менее 60 мин)',a:{kg:[15,20],max:2000},c:{kg:[15,15]},freq:'взрослым каждые 8–12 ч, детям каждые 6 ч'},
+       {id:'load',label:'Нагрузочная доза (тяжёлое состояние)',route:'в/в инфузия не менее 2 ч',a:{kg:[25,30],max:3000},c:{stop:'У детей — по назначению врача.'},freq:'однократно, далее поддерживающая'}],
+ extra(p,r){const c=crR(p);if(c!=null&&c<50)r.msgs.push({lvl:'warn',t:`${renalLabel(p)} < 50: интервал увеличивают, дозу подбирают по концентрации ванкомицина в крови.`});},
+ notes:[['warn','Быстрое введение вызывает «синдром красного человека» и гипотензию. Нефро- и ототоксичен: контроль креатинина.']]},
+{id:'amikacin',name:'Амикацин',g:'oth',src:[['Амикацин — описание вещества',AS('amikacin-120')]],
+ forms:[amp('a','250 мг/мл · амп. 2 мл (500 мг)',250,'мг',2),vial('v','Флакон 1 г (порошок)',1000,'мг')],
+ regs:[{id:'d3',label:'15 мг/кг в сутки в 2–3 введения',route:'в/м или в/в капельно 30–60 мин',a:{daily:[15,15],n:[3,2]},c:{daily:[15,15],n:[3,2]},freq:'каждые 8–12 ч',max:'не более 1,5 г в сутки'},
+       {id:'d1',label:'Однократно в сутки',route:'в/в капельно 30–60 мин',a:{kg:[15,15],max:1500},c:{kg:[15,15],max:1500},freq:'1 раз в сутки',max:'не более 1,5 г в сутки'}],
+ extra(p,r){const c=crR(p);if(c!=null&&c<60)r.msgs.push({lvl:'warn',t:`${renalLabel(p)} < 60: интервал увеличивают или дозу снижают пропорционально клиренсу; контроль концентрации (пик < 35, минимум < 10 мкг/мл).`});},
+ preg:{preg:['stop','Беременность — противопоказан (ото- и нефротоксичность для плода).']},
+ notes:[['warn','Нефро- и ототоксичен. Расчёт по массе до начала терапии; при ожирении обычно по скорректированной массе.']]},
+{id:'metronidazole',name:'Метронидазол',g:'oth',src:[['Метронидазол — описание вещества',AS('metronidazol-571')]],
+ forms:[amp('f','5 мг/мл · флакон 100 мл (500 мг)',5,'мг',100)],
+ regs:[{id:'an',label:'Анаэробная инфекция',route:'в/в капельно, 5 мл/мин',a:{fix:[500,500],t:'начальная 500–1000 мг, далее 500 мг'},c:{kg:[7.5,7.5]},adultY:12,freq:'каждые 8 ч'}],
+ preg:{t1:['stop','I триместр беременности — противопоказан.'],lact:['stop','Грудное вскармливание — противопоказан.']},
+ liver:['warn','Печёночная недостаточность — с осторожностью, особенно при больших дозах.'],
+ notes:[['info','Несовместим с алкоголем. Противопоказан при лейкопении и органических поражениях ЦНС.']]}
+];
+SMPd('ceftriaxone').xg='beta';ANEST.find(x=>x.id==='cefepime').xg='beta';
+KITS.abx=makeKit('abx',ABX,ABX_GROUPS,'cefazolin');
+
+/* ================= Избранное и отправка в Telegram ================= */
+const FAV_KEY='doza-fav';
+let FAV=[];try{FAV=JSON.parse(localStorage.getItem(FAV_KEY)||'[]')||[];}catch(e){FAV=[];}
+const isFav=(t,id)=>FAV.includes(t+':'+id);
+function toggleFav(t,id){const k=t+':'+id;FAV=isFav(t,id)?FAV.filter(x=>x!==k):FAV.concat(k);try{localStorage.setItem(FAV_KEY,JSON.stringify(FAV));}catch(e){}}
+function favHTML(t,list){
+  const cur=t==='main'?state.drug:(KITS[t]&&KITS[t].st.drug);
+  const items=list.filter(d=>isFav(t,d.id));
+  if(!items.length)return'';
+  return `<div class="dgroup fav-group" data-g="fav"><div class="gname">★ Избранное</div><div class="drow">${items.map(d=>`<button type="button" class="drug" data-id="${d.id}" data-s="${(d.name+' '+(d.brands||'')).toLowerCase()}" aria-pressed="${d.id===cur}"><span class="dn">${d.name}</span><small>${d.brands||(d.forms&&d.forms[0].label)||''}</small></button>`).join('')}</div></div>`;
+}
+const favBtn=(t,id)=>`<button type="button" class="fav" data-fav="${t}:${id}" aria-pressed="${isFav(t,id)}" title="${isFav(t,id)?'Убрать из избранного':'Добавить в избранное'}">${isFav(t,id)?'★ В избранном':'☆ В избранное'}</button>`;
+const APP_URL='https://indromedas.github.io/doza-app/';
+const tgShare=txt=>`<a class="copy" data-tgshare href="https://t.me/share/url?url=${encodeURIComponent(APP_URL)}&text=${encodeURIComponent(String(txt).replace(/ /g,' '))}" target="_blank" rel="noopener">В Telegram</a>`;
+document.addEventListener('click',e=>{
+  const f=e.target.closest('[data-fav]');
+  if(f){const [t,id]=f.dataset.fav.split(':');toggleFav(t,id);renderDrugs();Object.values(KITS).forEach(renderKitDrugs);filterDrugs();Object.values(KITS).forEach(K=>{if(E(K,'Q'))filterKit(K);});render();return;}
+  const a=e.target.closest('[data-tgshare]');
+  if(a){const tg=window.Telegram&&window.Telegram.WebApp;if(tg&&tg.platform&&tg.platform!=='unknown'&&tg.openTelegramLink){e.preventDefault();try{tg.openTelegramLink(a.href);}catch(err){window.open(a.href,'_blank');}}}
+});
+
+/* ================= Шкалы ================= */
+const GCS_E=[[4,'Произвольно'],[3,'На речь'],[2,'На боль'],[1,'Нет']];
+const GCS_VA=[[5,'Ориентирован, говорит правильно'],[4,'Спутанная речь'],[3,'Отдельные слова'],[2,'Нечленораздельные звуки'],[1,'Нет']];
+const GCS_VC=[[5,'Гулит, лепечет, улыбается'],[4,'Раздражён, плачет, но успокаивается'],[3,'Плачет на боль'],[2,'Стонет на боль'],[1,'Нет']];
+const GCS_M=[[6,'Выполняет команды (у младенцев — спонтанные движения)'],[5,'Локализует боль'],[4,'Отдёргивает конечность'],[3,'Сгибание (декортикация)'],[2,'Разгибание (децеребрация)'],[1,'Нет']];
+let scalesBuilt=false,scalesInfant=null;
+function selHTML(id,opts,def){return `<div class="inbox"><select id="${id}">${opts.map(o=>`<option value="${o[0]}"${o[0]===def?' selected':''}>${o[0]} — ${o[1]}</option>`).join('')}</select></div>`;}
+function numHTML(id,unit,val,ph){return `<div class="inbox"><input id="${id}" inputmode="decimal" autocomplete="off" value="${val}" placeholder="${ph||''}"><span class="u">${unit}</span></div>`;}
+function buildScales(infant){
+  const keep=id=>{const el=document.getElementById(id);return el?(el.type==='checkbox'?(el.checked?'1':''):el.value):null;};
+  const st={};['gE','gV','gM','nRR','nSp','nScale','nO2','nSBP','nHR','nCons','nT','qRR','qSBP','qMent'].forEach(k=>st[k]=keep(k));
+  $('#scalesForm').innerHTML=`
+  <div class="panel"><div class="ph"><h2>Шкала комы Глазго</h2><span>${infant?'вариант для детей до 2 лет':'взрослые и дети старше 2 лет'}</span></div>
+    <div class="fields"><div class="field"><label class="lbl" for="gE">Открывание глаз</label>${selHTML('gE',GCS_E,4)}</div>
+    <div class="field"><label class="lbl" for="gV">Речевая реакция</label>${selHTML('gV',infant?GCS_VC:GCS_VA,5)}</div>
+    <div class="field"><label class="lbl" for="gM">Двигательная реакция</label>${selHTML('gM',GCS_M,6)}</div></div>
+    <div class="figs" style="margin-top:14px;grid-template-columns:1fr 2fr" id="gcsOut"></div></div>
+  <div class="panel"><div class="ph"><h2>qSOFA</h2><span>скрининг сепсиса вне ОРИТ</span></div>
+    <div class="fields"><label class="check"><input type="checkbox" id="qRR"><span>ЧДД ≥ 22 в минуту</span></label>
+    <label class="check"><input type="checkbox" id="qSBP"><span>САД ≤ 100 мм рт. ст.</span></label>
+    <label class="check"><input type="checkbox" id="qMent"><span>Изменение сознания (Глазго < 15)</span></label></div>
+    <div class="figs" style="margin-top:14px;grid-template-columns:1fr 2fr" id="qOut"></div></div>
+  <div class="panel"><div class="ph"><h2>NEWS2</h2><span>раннее выявление ухудшения у взрослых</span></div>
+    <div class="fields"><div class="two"><div class="field"><label class="lbl" for="nRR">ЧДД</label>${numHTML('nRR','в мин','18')}</div><div class="field"><label class="lbl" for="nSp">SpO₂</label>${numHTML('nSp','%','97')}</div></div>
+    <div class="two"><div class="field"><label class="lbl" for="nScale">Шкала SpO₂</label><div class="inbox"><select id="nScale"><option value="1">1 — обычная</option><option value="2">2 — гиперкапния (цель 88–92%)</option></select></div></div>
+    <div class="field"><label class="lbl" for="nO2">Дыхание</label><div class="inbox"><select id="nO2"><option value="air">Воздух</option><option value="o2">Кислород</option></select></div></div></div>
+    <div class="two"><div class="field"><label class="lbl" for="nSBP">САД</label>${numHTML('nSBP','мм рт. ст.','125')}</div><div class="field"><label class="lbl" for="nHR">ЧСС</label>${numHTML('nHR','в мин','80')}</div></div>
+    <div class="two"><div class="field"><label class="lbl" for="nCons">Сознание</label><div class="inbox"><select id="nCons"><option value="A">Ясное (A)</option><option value="C">Новая спутанность, реакция на голос, боль или нет (C/V/P/U)</option></select></div></div>
+    <div class="field"><label class="lbl" for="nT">Температура</label>${numHTML('nT','°C','36,8')}</div></div></div>
+    <div class="figs" style="margin-top:14px;grid-template-columns:1fr 2fr" id="nOut"></div></div>
+  <div class="src"><div><span class="lbl">Источник</span>Шкала Глазго (Teasdale, Jennett), педиатрическая модификация; qSOFA — Sepsis-3 (2016); NEWS2 — Royal College of Physicians (2017).</div><p>Шкалы помогают оценить тяжесть, но решение принимает врач по всей клинической картине.</p></div>`;
+  Object.entries(st).forEach(([k,v])=>{const el=document.getElementById(k);if(el&&v!=null){if(el.type==='checkbox')el.checked=v==='1';else if([...(el.options||[{value:v}])].some(o=>o.value===v))el.value=v;}});
+}
+const nv=id=>{const v=parseFloat(String($('#'+id).value).replace(',','.'));return isFinite(v)?v:null;};
+function computeScales(){
+  const e=+$('#gE').value,v=+$('#gV').value,m=+$('#gM').value,g=e+v+m;
+  const gl=g>=13?['ok','Лёгкое нарушение / норма']:g>=9?['warn','Умеренное угнетение']:['stop','Тяжёлое угнетение, кома — защитить дыхательные пути'];
+  $('#gcsOut').innerHTML=`<div class="fig main"><span class="lab">Глазго</span><span class="val">${g} <small>из 15</small></span><span class="sub">E${e} V${v} M${m}</span></div><div class="fig"><span class="lab">Оценка</span><span class="val txt"><span class="pill ${gl[0]}">${gl[1]}</span></span><span class="sub ui">${g<=8?'≤ 8 баллов — показание к интубации':'15 — ясное сознание; 13–14 — оглушение; 9–12 — сопор'}</span></div>`;
+  const q=[$('#qRR').checked,$('#qSBP').checked,$('#qMent').checked].filter(Boolean).length;
+  $('#qOut').innerHTML=`<div class="fig main"><span class="lab">qSOFA</span><span class="val">${q} <small>из 3</small></span><span class="sub">&nbsp;</span></div><div class="fig"><span class="lab">Оценка</span><span class="val txt"><span class="pill ${q>=2?'stop':'ok'}">${q>=2?'Высокий риск неблагоприятного исхода':'Низкий риск'}</span></span><span class="sub ui">${q>=2?'≥ 2 баллов: заподозрить сепсис, оценить SOFA, лактат, начать лечение':'Не исключает сепсис — наблюдать'}</span></div>`;
+  const rr=nv('nRR'),sp=nv('nSp'),sbp=nv('nSBP'),hr=nv('nHR'),t=nv('nT'),o2=$('#nO2').value==='o2',s2=$('#nScale').value==='2',cons=$('#nCons').value;
+  const parts=[];let tot=0,three=false;
+  const addp=(name,pts)=>{tot+=pts;if(pts===3)three=true;parts.push(`${name} ${pts}`);};
+  if(rr!=null)addp('ЧДД',rr<=8?3:rr<=11?1:rr<=20?0:rr<=24?2:3);
+  if(sp!=null){let s;if(!s2)s=sp<=91?3:sp<=93?2:sp<=95?1:0;else{if(sp<=83)s=3;else if(sp<=85)s=2;else if(sp<=87)s=1;else if(sp<=92||!o2)s=0;else if(sp<=94)s=1;else if(sp<=96)s=2;else s=3;}addp('SpO₂',s);}
+  addp('O₂',o2?2:0);
+  if(sbp!=null)addp('САД',sbp<=90?3:sbp<=100?2:sbp<=110?1:sbp<=219?0:3);
+  if(hr!=null)addp('ЧСС',hr<=40?3:hr<=50?1:hr<=90?0:hr<=110?1:hr<=130?2:3);
+  addp('Сознание',cons==='A'?0:3);
+  if(t!=null)addp('t°',t<=35?3:t<=36?1:t<=38?0:t<=39?1:2);
+  const nl=tot>=7?['stop','Высокий риск: экстренная оценка, рассмотреть ОРИТ']:tot>=5?['warn','Средний риск: срочная оценка врачом']:three?['warn','Низко-средний риск: один параметр 3 балла — срочный осмотр']:['ok','Низкий риск'];
+  $('#nOut').innerHTML=`<div class="fig main"><span class="lab">NEWS2</span><span class="val">${tot} <small>баллов</small></span><span class="sub">${parts.join(' · ')}</span></div><div class="fig"><span class="lab">Оценка</span><span class="val txt"><span class="pill ${nl[0]}">${nl[1]}</span></span><span class="sub ui">0–4 низкий, 5–6 средний, ≥ 7 высокий риск</span></div>`;
+}
+function renderScales(p){
+  const infant=p.ok?p.ageY<2:false;
+  if(!scalesBuilt||infant!==scalesInfant){buildScales(infant);scalesBuilt=true;scalesInfant=infant;}
+  computeScales();
+}
+document.addEventListener('input',e=>{if(e.target.closest&&e.target.closest('#scalesForm'))computeScales();});
+document.addEventListener('change',e=>{if(e.target.closest&&e.target.closest('#scalesForm'))computeScales();});
+
+
+const TABS=['main','smp','anest','abx','card','scales'];
 function setTab(t){
   curTab=TABS.includes(t)?t:'main';
-  $('#paneMain').hidden=curTab!=='main';$('#paneSmp').hidden=curTab!=='smp';$('#paneAnest').hidden=curTab!=='anest';$('#paneCard').hidden=curTab!=='card';
+  $('#paneMain').hidden=curTab!=='main';$('#paneSmp').hidden=curTab!=='smp';$('#paneAnest').hidden=curTab!=='anest';$('#paneCard').hidden=curTab!=='card';$('#paneAbx').hidden=curTab!=='abx';$('#paneScales').hidden=curTab!=='scales';
   document.querySelectorAll('.tabs [data-tab]').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.tab===curTab)));
   const want=curTab==='main'?'':'#'+curTab;
   if(location.hash!==want){try{history.replaceState(null,'',want||location.pathname+location.search);}catch(e){}}
@@ -2604,11 +2765,12 @@ function setTab(t){
 document.addEventListener('input',e=>{
   const id=e.target.id;
   if(id==='drugQ'){filterDrugs();return;}
-  if(id==='smpQ'||id==='anestQ'){filterKit(KITS[id.slice(0,-1)]);return;}
-  if(e.target.closest('.panel')&&!e.target.matches('[name=form],[name=mode],[name=smpForm],[name=smpReg],[name=anestForm],[name=anestReg],[name=smpVar]'))render();
+  if(id==='smpQ'||id==='anestQ'||id==='abxQ'){filterKit(KITS[id.slice(0,-1)]);return;}
+  if(e.target.closest('#scalesForm'))return;
+  if(e.target.closest('.panel')&&!e.target.matches('[name=form],[name=mode],[name=smpForm],[name=smpReg],[name=anestForm],[name=anestReg],[name=abxForm],[name=abxReg],[name=smpVar]'))render();
 });
 document.addEventListener('change',e=>{
-  const t=e.target,m=/^(smp|anest)(Form|Reg)$/.exec(t.name||'');
+  const t=e.target,m=/^(smp|anest|abx)(Form|Reg)$/.exec(t.name||'');
   if(t.name==='smpVar'){setSmpVariant(t.value);return;}
   if(m){const K=KITS[m[1]];(m[2]==='Form'?K.st.form:K.st.reg)[K.st.drug]=t.value;render();}
   else if(t.name==='form'){state.form[state.drug]=t.value;render();}
@@ -2618,7 +2780,7 @@ document.addEventListener('change',e=>{
 $('#drugs').addEventListener('click',e=>{
   const b=e.target.closest('.drug');if(!b)return;
   state.drug=b.dataset.id;
-  document.querySelectorAll('#drugs .drug').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
+  document.querySelectorAll('#drugs .drug').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.id===b.dataset.id)));
   render();
 });
 document.querySelector('.presets').addEventListener('click',e=>{
@@ -2642,7 +2804,7 @@ Object.values(KITS).forEach(K=>{
   E(K,'Drugs').addEventListener('click',e=>{
     const b=e.target.closest('.drug');if(!b)return;
     K.st.drug=b.dataset.id;
-    E(K,'Drugs').querySelectorAll('.drug').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
+    E(K,'Drugs').querySelectorAll('.drug').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.id===b.dataset.id)));
     render();
   });
   E(K,'Result').addEventListener('click',e=>{
