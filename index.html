@@ -236,8 +236,9 @@ footer b{color:var(--ink);font-weight:600}
   <div class="notice" role="note"><b>Важно</b><span>Это справочный расчёт по инструкциям из Регистра лекарственных средств России (rlsnet.ru). Он не заменяет назначение врача и не учитывает аллергии и лекарственные взаимодействия. Перед приёмом сверьтесь с инструкцией к вашей упаковке: у разных производителей дозировки могут отличаться.</span></div>
 
   <nav class="tabs" role="tablist" aria-label="Разделы калькулятора">
-    <button type="button" role="tab" id="tabMain" data-tab="main" aria-selected="true">Амбулаторные формы <span class="cnt">19</span></button>
+    <button type="button" role="tab" id="tabMain" data-tab="main" aria-selected="true">Амбулаторные формы <span class="cnt" id="mainCnt">33</span></button>
     <button type="button" role="tab" id="tabSmp" data-tab="smp" aria-selected="false">СМП · укладка 1165н <span class="cnt" id="smpCnt">85</span></button>
+    <button type="button" role="tab" id="tabAnest" data-tab="anest" aria-selected="false">Анестезиология <span class="cnt" id="anestCnt">12</span></button>
   </nav>
 
   <main class="layout">
@@ -326,6 +327,18 @@ footer b{color:var(--ink);font-weight:600}
       </div>
       <div class="panel result" id="smpResult" aria-live="polite"></div>
      </div>
+     <div class="work-pane" id="paneAnest" hidden>
+      <div class="panel" aria-labelledby="anestH">
+        <div class="ph"><h2 id="anestH">Анестезиология</h2><span>Индукция, миорелаксация, периоперационные препараты</span></div>
+        <div class="inbox search"><input id="anestQ" type="search" autocomplete="off" placeholder="Препарат: пропофол, рокуроний, сугаммадекс…" aria-label="Поиск в анестезиологии"></div>
+        <div class="dgroups" id="anestDrugs"></div>
+        <div class="opts">
+          <div class="field"><span class="lbl" id="anestFormLbl">Форма и концентрация</span><div class="chips" id="anestForms" role="radiogroup" aria-labelledby="anestFormLbl"></div></div>
+          <div class="field" id="anestRegRow" hidden><span class="lbl" id="anestRegLbl">Этап и режим</span><div class="chips regs" id="anestRegs" role="radiogroup" aria-labelledby="anestRegLbl"></div></div>
+        </div>
+      </div>
+      <div class="panel result" id="anestResult" aria-live="polite"></div>
+     </div>
      <div class="work-pane" id="paneMain">
       <div class="panel" aria-labelledby="drugH">
         <div class="ph"><h2 id="drugH">Препарат</h2><span><span class="rxtag">Rx</span> — по рецепту</span></div>
@@ -352,6 +365,7 @@ footer b{color:var(--ink);font-weight:600}
   <footer>
     <p><b>Источники.</b> Инструкции по медицинскому применению из Регистра лекарственных средств России (rlsnet.ru), сверено в ноябре 2026 года. В карточке каждого препарата есть ссылка на страницу РЛС. Если в РЛС для препарата нет схемы дозирования, в карточке это отмечено.</p>
     <p><b>Вкладка СМП.</b> Состав — укладка общепрофильная по приказу Минздрава России от 28.10.2020 № 1165н. Дозы — из РЛС; где в РЛС схемы нет, они взяты из инструкции производителя или клинических рекомендаций, и в карточке это отмечено. Концентрации ампул — стандартные российские формы: сверяйте с ампулой в руках.</p>
+    <p><b>Вкладка «Анестезиология».</b> Только для врача анестезиолога-реаниматолога при возможности ИВЛ и мониторинга. Дозы — РЛС и инструкции препаратов; рокуроний при ожирении считается по идеальной массе, сугаммадекс — по фактической.</p>
     <p><b>Формулы.</b> Площадь поверхности тела — Мостеллер; идеальная масса — Devine; клиренс креатинина — Кокрофт–Голт (с 18 лет, по идеальной или скорректированной массе); СКФ у детей 1–17 лет — формула Шварца у постели больного.</p>
     <p><b>Ограничения.</b> Калькулятор не проверяет аллергии, сопутствующие болезни и взаимодействия. При подозрении на передозировку звоните 103 или 112.</p>
   </footer>
@@ -437,9 +451,11 @@ const RLS='https://www.rlsnet.ru/';
 const GROUPS=[
   {id:'fever',name:'Жаропонижающие и обезболивающие'},
   {id:'abx',name:'Антибиотики'},
-  {id:'allergy',name:'Противоаллергические'},
+  {id:'allergy',name:'Противоаллергические и гормональные'},
   {id:'cough',name:'При кашле'},
-  {id:'gi',name:'ЖКТ и спазмы'}
+  {id:'nose',name:'Для носа'},
+  {id:'gi',name:'ЖКТ и спазмы'},
+  {id:'antiv',name:'Противовирусные и противогрибковые'}
 ];
 
 const IBU_BANDS=[
@@ -1108,7 +1124,338 @@ const DRUGS=[
     add(r,'info','Содержит лактозу. С осторожностью при низком давлении.');
     return r;
   }
+},
+/* ===== Добавлено: пункт 3 ===== */
+{
+  id:'ondansetron',name:'Ондансетрон',group:'gi',cls:'Противорвотное',rx:true,
+  brands:'Зофран, Латран',
+  src:[['Ондансетрон — описание вещества',RLS+'active-substance/ondansetron-575'],['Зофран — инструкция',RLS+'drugs/zofran-1351']],
+  def:{child:'sy',adult:'t8'},
+  modes:[{id:'chemo',label:'Химио- и лучевая терапия'},{id:'ponv',label:'Профилактика рвоты перед операцией'}],
+  modeHint:'Ондансетрон зарегистрирован для рвоты при химио- и лучевой терапии и после операций.',
+  forms:[
+    {id:'t4',label:'Таблетки 4 мг',kind:'unit',unit:'tab',mg:4,route:'внутрь'},
+    {id:'t8',label:'Таблетки 8 мг',kind:'unit',unit:'tab',mg:8,route:'внутрь'},
+    {id:'sy',label:'Сироп 4 мг / 5 мл',kind:'liquid',mg:0.8,route:'внутрь'}
+  ],
+  calc(p,form,mode){
+    const r=R();r.dailyMode='total';
+    if(p.ageY<2)return stop(r,'Детям до 2 лет приём внутрь не изучен — противопоказан.');
+    pregNotes(r,p,{preg:['stop','Беременность — противопоказан (инструкция Зофрана).'],lact:['stop','Грудное вскармливание — противопоказан.']});
+    if(mode==='ponv'){
+      if(p.ageY<18)return stop(r,'Детям профилактику послеоперационной рвоты проводят только парентерально: 0,1 мг/кг в/в, не более 4 мг.');
+      setFixed(r,16,1,'однократно','за 1 ч до наркоза');r.trace.push('Взрослым: 16 мг внутрь за 1 ч до начала наркоза');
+    }else if(p.ageY>=18){
+      setFixed(r,8,2,'каждые 12 ч');r.course='до 5 дней после курса';r.trace.push('Взрослым: 8 мг каждые 12 ч, до 5 дней');
+    }else{
+      if(!p.bsa)return stop(r,'Для расчёта у детей нужен рост: доза зависит от площади поверхности тела.');
+      const d=p.bsa<0.6?2:4;setFixed(r,d,2,'каждые 12 ч');r.course='до 5 дней после курса';
+      r.trace.push(`Площадь тела ${nf(p.bsa,2)} м² ${p.bsa<0.6?'< 0,6 м² → 2 мг':'≥ 0,6 м² → 4 мг'} каждые 12 ч`);
+    }
+    add(r,'info','При химиотерапии первую дозу вводят в/в перед курсом, внутрь продолжают через 12 ч.');
+    add(r,'info','Может удлинять интервал QT — осторожно при аритмиях и гипокалиемии.');
+    return r;
+  }
+},
+{
+  id:'loperamide',name:'Лоперамид',group:'gi',cls:'Противодиарейное',rx:false,
+  brands:'Имодиум, Лопедиум',
+  src:[['Лоперамид — описание вещества',RLS+'active-substance/loperamid-598'],['Имодиум — инструкция',RLS+'drugs/imodium-1427']],
+  def:{child:'t2',adult:'t2'},
+  forms:[{id:'t2',label:'Таблетки / капсулы 2 мг',kind:'unit',unit:'tab',mg:2,route:'внутрь'}],
+  calc(p){
+    const r=R();
+    if(p.ageY<6)return stop(r,'Детям до 6 лет не применяют (Имодиум — с 6 лет).');
+    pregNotes(r,p,{t1:['stop','I триместр беременности — противопоказан.'],t2:['warn','II–III триместры — только по назначению врача.'],t3:['warn','II–III триместры — только по назначению врача.'],lact:['stop','Грудное вскармливание — противопоказан.']});
+    if(p.ageY<18){
+      r.doseMin=r.doseMax=2;r.timesNote='первая доза';r.freq='затем по 2 мг после каждого жидкого стула';
+      let d=0.3*p.w;r.trace.push('Дети от 6 лет: 2 мг сразу, затем 2 мг после каждого жидкого стула');
+      r.trace.push(`Суточный максимум: 3 таблетки на 20 кг (0,3 мг/кг) × ${nf(p.w,1)} кг = ${mg(d)}${d>16?' → 16 мг':''}`);r.maxDaily=Math.min(d,16);
+    }else{
+      r.doseMin=r.doseMax=4;r.timesNote='первая доза';r.freq='затем по 2 мг после каждого жидкого стула';r.maxDaily=16;
+      r.trace.push('Взрослые: 4 мг сразу, затем 2 мг после каждого жидкого стула, не более 16 мг в сутки');
+    }
+    add(r,'warn','Не применять при крови в стуле, высокой температуре, острой дизентерии и колите на фоне антибиотиков. Нет улучшения за 48 ч — к врачу.');
+    add(r,'info','При нормальном стуле или отсутствии стула более 12 ч приём прекращают.');
+    return r;
+  }
+},
+{
+  id:'omeprazole',name:'Омепразол',group:'gi',cls:'Снижает кислотность желудка',rx:false,
+  brands:'Омез, Лосек МАПС, Ультоп',
+  src:[['Омепразол — инструкция',RLS+'drugs/omeprazol-1414'],['Омепразол — описание вещества',RLS+'active-substance/omeprazol-81']],
+  srcNote:'Детские дозы по массе — по инструкции Лосек МАПС; в описании вещества РЛС режим зависит от показания.',
+  def:{child:'m10',adult:'c20'},
+  forms:[
+    {id:'c20',label:'Капсулы 20 мг',kind:'unit',unit:'caps',mg:20,route:'внутрь'},
+    {id:'m10',label:'Таблетки МАПС 10 мг',kind:'unit',unit:'tab',mg:10,route:'внутрь'},
+    {id:'m20',label:'Таблетки МАПС 20 мг',kind:'unit',unit:'tab',mg:20,route:'внутрь'}
+  ],
+  calc(p){
+    const r=R();r.dailyMode='total';
+    if(p.ageY<1||p.w<10)return stop(r,'Детям до 1 года и с массой меньше 10 кг — только по назначению врача.');
+    if(p.ageY<18){const d=p.w<=20?10:20;setFixed(r,d,1,'1 раз в сутки, утром');r.trace.push(`Масса ${p.w<=20?'10–20':'более 20'} кг: ${mg(d)} 1 раз в сутки`);}
+    else{r.doseMin=20;r.doseMax=40;r.timesMax=1;r.freq='1 раз в сутки, утром перед едой';r.trace.push('Взрослые: 20 мг 1 раз в сутки, в резистентных случаях 40 мг');}
+    r.course='обычно 2–8 недель';
+    if(p.liver)add(r,'warn','Нарушение функции печени: обычно достаточно 10–20 мг в сутки.');
+    add(r,'info','Капсулу глотают целиком перед едой. Таблетки МАПС можно растворить в воде.');
+    return r;
+  }
+},
+{
+  id:'simethicone',name:'Симетикон',group:'gi',cls:'Против вздутия живота',rx:false,
+  brands:'Эспумизан, Саб Симплекс',
+  src:[['Эспумизан — инструкция',RLS+'drugs/espumizan-2544'],['Симетикон — описание вещества',RLS+'active-substance/simetikon-762']],
+  def:{child:'em',adult:'c40'},
+  forms:[
+    {id:'em',label:'Эмульсия 40 мг / 5 мл',kind:'liquid',mg:8,route:'внутрь'},
+    {id:'c40',label:'Капсулы 40 мг',kind:'unit',unit:'caps',mg:40,route:'внутрь',minAgeY:6}
+  ],
+  calc(p){
+    const r=R();
+    if(p.ageY<6){setFixed(r,40,5,'3–5 раз в сутки');r.trace.push('Дети грудного и раннего возраста: 1 ч. ложка эмульсии (40 мг) 3–5 раз в сутки');}
+    else{r.doseMin=40;r.doseMax=80;r.timesMax=5;r.freq='3–5 раз в сутки';r.maxDaily=400;r.trace.push('С 6 лет и взрослые: 40–80 мг 3–5 раз в сутки');}
+    add(r,'info','Во время или после еды и на ночь. Грудным детям — с питанием из бутылочки.');
+    return r;
+  }
+},
+{
+  id:'lactulose',name:'Лактулоза',group:'gi',cls:'Слабительное',rx:false,
+  brands:'Дюфалак, Нормазе',
+  src:[['Дюфалак — инструкция',RLS+'drugs/diufalak-7297']],
+  def:{child:'sy',adult:'sy'},
+  forms:[{id:'sy',label:'Сироп 667 мг/мл',kind:'liquid',mg:1,route:'внутрь'}],
+  calc(p){
+    const r=R();r.dailyMode='total';r.noMg=true;r.doseLabel='Суточная доза';r.doseNote='начальная, 1 раз в сутки или в 2 приёма';
+    let lo,hi,txt,maint;
+    if(p.ageY<1){lo=hi=5;txt='до 1 года: до 5 мл';maint='до 5 мл';}
+    else if(p.ageY<7){lo=5;hi=10;txt='1–6 лет: 5–10 мл';maint='5–10 мл';}
+    else if(p.ageY<15){lo=hi=15;txt='7–14 лет: 15 мл';maint='10–15 мл';}
+    else{lo=15;hi=45;txt='подростки и взрослые: 15–45 мл';maint='15–30 мл';}
+    r.doseMin=lo;r.doseMax=hi;r.timesMax=1;r.freq='1 раз в сутки (например, за завтраком)';r.course=`поддерживающая ${maint} в сутки`;
+    r.dailyNote='эффект через 2–3 дня';
+    r.trace.push(`Начальная суточная доза (${txt}); поддерживающая — ${maint}`);
+    add(r,'info','Проглотить сразу, не задерживая во рту. Противопоказана при галактоземии и кишечной непроходимости.');
+    return r;
+  }
+},
+{
+  id:'domperidone',name:'Домперидон',group:'gi',cls:'Противорвотное, прокинетик',rx:false,
+  brands:'Мотилиум, Пассажикс',
+  src:[['Мотилиум',RLS+'drugs/motilium-2058'],['Домперидон — описание вещества',RLS+'active-substance/domperidon-549']],
+  srcNote:'В РЛС: «в минимально возможной дозе, как можно короче». Дозы — по действующей инструкции Мотилиума (с 2014 года: не более 30 мг в сутки).',
+  def:{child:'s1',adult:'t10'},
+  forms:[
+    {id:'t10',label:'Таблетки 10 мг',kind:'unit',unit:'tab',mg:10,route:'внутрь'},
+    {id:'s1',label:'Суспензия 1 мг/мл',kind:'liquid',mg:1,route:'внутрь'}
+  ],
+  calc(p,form){
+    const r=R();r.freq='до 3 раз в сутки';r.timesMax=3;r.course='не дольше 7 дней';
+    if(p.ageY>=12&&p.w>=35){setFixed(r,10,3,'до 3 раз в сутки');r.trace.push('С 12 лет и массой ≥ 35 кг: 10 мг до 3 раз в сутки, не более 30 мг');}
+    else{
+      if(form.kind==='unit')return stop(r,'При массе меньше 35 кг — только суспензия.');
+      r.basis='0,25 мг/кг до 3 раз в сутки';[r.doseMin,r.doseMax]=perKg(r,p.w,0.25,0.25);
+      r.maxDaily=Math.min(0.75*p.w,30);r.trace.push(`Не более 0,75 мг/кг в сутки = ${mg(0.75*p.w)}`);
+    }
+    if(p.liver)add(r,'stop','Нарушение функции печени средней и тяжёлой степени — противопоказан.');
+    add(r,'warn','Противопоказан при удлинении QT, нарушениях электролитов, сердечной недостаточности и вместе с кетоконазолом, кларитромицином, эритромицином.');
+    add(r,'info','Принимать за 15–30 мин до еды.');
+    return r;
+  }
+},
+{
+  id:'fluconazole',name:'Флуконазол',group:'antiv',cls:'Противогрибковое',rx:true,
+  brands:'Дифлюкан, Флюкостат, Микосист',
+  src:[['Флуконазол — описание вещества',RLS+'active-substance/flukonazol-543'],['Дифлюкан',RLS+'drugs/difliukan-1246']],
+  def:{child:'s10',adult:'c150'},
+  modes:[{id:'muc',label:'Кандидоз слизистых'},{id:'sys',label:'Генерализованный кандидоз'},{id:'vag',label:'Вагинальный кандидоз'}],
+  forms:[
+    {id:'c50',label:'Капсулы 50 мг',kind:'unit',unit:'caps',mg:50,route:'внутрь'},
+    {id:'c150',label:'Капсулы 150 мг',kind:'unit',unit:'caps',mg:150,route:'внутрь'},
+    {id:'s10',label:'Суспензия 50 мг / 5 мл',kind:'liquid',mg:10,route:'внутрь'}
+  ],
+  calc(p,form,mode){
+    const r=R();r.dailyMode='total';r.freq='1 раз в сутки';r.timesMax=1;
+    if(mode==='vag'){
+      if(p.ageY<12)return stop(r,'Схема для взрослых и подростков.');
+      setFixed(r,150,1,'однократно');r.trace.push('Вагинальный кандидоз: 150 мг однократно');
+    }else if(p.ageY<18){
+      const k=mode==='sys'?[6,12]:[3,6];r.basis=`${k[0]}–${k[1]} мг/кг в сутки`;
+      [r.doseMin,r.doseMax]=perKg(r,p.w,k[0],k[1],400);
+      if(p.ageM<1)add(r,'warn','Первые 2 недели жизни — та же доза в мг/кг, но с интервалом 72 ч; 2–4 недели — 48 ч.');
+    }else if(mode==='sys'){
+      r.doseMin=200;r.doseMax=400;r.trace.push('Взрослые: 400 мг в 1-й день, затем 200–400 мг в сутки');add(r,'info','В первый день — 400 мг.');
+    }else{
+      r.doseMin=50;r.doseMax=100;r.course='7–14 дней';r.trace.push('Орофарингеальный кандидоз: 50–100 мг в сутки, 7–14 дней');
+    }
+    if(p.crcl!=null&&p.crcl<=50&&mode!=='vag'){r.doseMin/=2;r.doseMax/=2;add(r,'warn',`${renalLabel(p)} ≤ 50: после первой полной дозы — 50% обычной.`);r.trace.push('Коррекция по функции почек: 50% дозы');}
+    pregNotes(r,p,{preg:['warn','Беременность — только при тяжёлых инфекциях, если польза превышает риск.'],lact:['warn','Проникает в грудное молоко — с осторожностью.']});
+    add(r,'info','Противопоказан вместе с цизапридом, терфенадином (при дозах ≥ 400 мг), хинидином — риск удлинения QT.');
+    return r;
+  }
+},
+{
+  id:'acyclovir',name:'Ацикловир',group:'antiv',cls:'Противовирусное (герпес)',rx:false,
+  brands:'Зовиракс, Ацик',
+  src:[['Ацикловир — описание вещества',RLS+'active-substance/aciklovir-27'],['Зовиракс',RLS+'drugs/zoviraks-1342']],
+  srcNote:'Простой герпес у взрослых — РЛС (описание вещества). Схемы при опоясывающем герпесе, ветряной оспе и детские дозы — по инструкции Зовиракса.',
+  def:{child:'t200',adult:'t200'},
+  modes:[{id:'hsv',label:'Простой герпес'},{id:'zos',label:'Опоясывающий герпес'},{id:'vzv',label:'Ветряная оспа'}],
+  forms:[
+    {id:'t200',label:'Таблетки 200 мг',kind:'unit',unit:'tab',mg:200,div:true,route:'внутрь'},
+    {id:'t400',label:'Таблетки 400 мг',kind:'unit',unit:'tab',mg:400,div:true,route:'внутрь'}
+  ],
+  calc(p,form,mode){
+    const r=R();r.dailyMode='total';
+    if(mode==='hsv'){
+      const d=p.ageY<2?100:200;setFixed(r,d,5,'5 раз в сутки (кроме ночи)');r.course='5–10 дней';
+      r.trace.push(p.ageY<2?'До 2 лет: половина взрослой дозы — 100 мг 5 раз в сутки':'200 мг 5 раз в сутки (кроме ночи)');
+    }else if(mode==='zos'){
+      if(p.ageY<18)return stop(r,'Схема для взрослых; детям — по назначению врача.');
+      setFixed(r,800,5,'5 раз в сутки (кроме ночи)');r.course='7 дней';r.trace.push('Опоясывающий герпес: 800 мг 5 раз в сутки, 7 дней');
+    }else{
+      if(p.ageY<2)return stop(r,'Детям до 2 лет — по назначению врача.');
+      if(p.ageY<18){r.basis='20 мг/кг 4 раза в сутки';[r.doseMin,r.doseMax]=perKg(r,p.w,20,20,800);r.timesMax=4;r.freq='4 раза в сутки';r.timesNote='';r.course='5 дней';}
+      else{setFixed(r,800,5,'5 раз в сутки (кроме ночи)');r.course='7 дней';r.trace.push('Взрослые: 800 мг 5 раз в сутки, 7 дней');}
+    }
+    if(lowCr(p,25))add(r,'warn',`${renalLabel(p)} < 25: кратность приёма снижают (при < 10 — 2 раза в сутки) — по назначению врача.`);
+    add(r,'info','Начинать как можно раньше после появления симптомов. Пить достаточно жидкости.');
+    return r;
+  }
+},
+{
+  id:'oseltamivir',name:'Осельтамивир',group:'antiv',cls:'Противовирусное (грипп)',rx:true,
+  brands:'Тамифлю, Номидес',
+  src:[['Тамифлю — инструкция',RLS+'drugs/tamifliu-14676']],
+  def:{child:'mix',adult:'c75'},
+  modes:[{id:'tr',label:'Лечение'},{id:'pr',label:'Профилактика после контакта'}],
+  modeHint:'Лечение начинать не позднее 2 суток от начала симптомов; профилактику — не позднее 2 суток после контакта.',
+  forms:[
+    {id:'c30',label:'Капсулы 30 мг',kind:'unit',unit:'caps',mg:30,route:'внутрь'},
+    {id:'c45',label:'Капсулы 45 мг',kind:'unit',unit:'caps',mg:45,route:'внутрь'},
+    {id:'c75',label:'Капсулы 75 мг',kind:'unit',unit:'caps',mg:75,route:'внутрь'},
+    {id:'mix',label:'Смесь из капсулы 75 мг — 15 мг/мл',kind:'liquid',mg:15,route:'внутрь'}
+  ],
+  calc(p,form,mode){
+    const r=R();r.dailyMode='total';
+    if(p.ageY<1)return stop(r,'Детям до 1 года противопоказан.');
+    if(lowCr(p,10))return stop(r,`${renalLabel(p)} < 10 — противопоказан.`);
+    let d;
+    if(p.ageY>12||p.w>40){d=75;r.trace.push(p.ageY>12?'Старше 12 лет: 75 мг':'Масса > 40 кг: 75 мг');}
+    else{const T=[[15,30,'≤ 15 кг'],[23,45,'15–23 кг'],[40,60,'23–40 кг'],[Infinity,75,'> 40 кг']];const row=T.find(x=>p.w<=x[0]);d=row[1];r.trace.push(`Таблица инструкции: масса ${row[2]} → ${mg(d)}`);}
+    if(mode==='pr'){setFixed(r,d,1,'1 раз в сутки');r.course='не менее 10 дней';}
+    else{setFixed(r,d,2,'2 раза в сутки');r.course='5 дней';}
+    if(lowCr(p,30))add(r,'warn',`${renalLabel(p)} 10–30: дозу уменьшают — по назначению врача.`);
+    if(p.liver)add(r,'stop','Тяжёлая печёночная недостаточность — противопоказан.');
+    add(r,'info','Можно во время еды — так лучше переносится. Капсулу можно вскрыть и смешать со сладкой едой.');
+    return r;
+  }
+},
+{
+  id:'xylometazoline',name:'Ксилометазолин',group:'nose',cls:'Сосудосуживающее для носа',rx:false,
+  brands:'Отривин, Галазолин, Снуп',
+  src:[['Отривин — инструкция',RLS+'drugs/otrivin-2347'],['Ксилометазолин — описание вещества',RLS+'active-substance/ksilometazolin-692']],
+  srcNote:'Спрей 0,1% — по инструкции Отривина. Схема для капель 0,05% (2–6 лет) — по инструкциям детских форм ксилометазолина.',
+  def:{child:'d05',adult:'sp1'},
+  forms:[
+    {id:'sp1',label:'Спрей 0,1% (с 6 лет)',kind:'unit',unit:'puff',mg:1,route:'интраназально'},
+    {id:'d05',label:'Капли 0,05% (2–6 лет)',kind:'drops',mgPerDrop:1,route:'интраназально'}
+  ],
+  calc(p,form){
+    const r=R();r.noMg=true;r.perNostril=true;r.doseNote='в каждый носовой ход';r.dailyNote='в каждый носовой ход';
+    if(p.ageY<2)return stop(r,'Детям до 2 лет не применяют.');
+    if(form.id==='sp1'){
+      if(p.ageY<6)return stop(r,'Спрей 0,1% — с 6 лет. Для детей 2–6 лет — капли 0,05%.');
+      setFixed(r,1,3,'1–3 раза в сутки');r.trace.push('1 впрыскивание в каждый носовой ход 1–3 раза в сутки');
+      if(p.ageY<12)add(r,'info','Детям 6–11 лет — по рекомендации врача, под контролем взрослых.');
+    }else{
+      if(p.ageY>=6)add(r,'info','С 6 лет удобнее спрей 0,1%.');
+      r.doseMin=1;r.doseMax=2;r.timesMax=2;r.freq='1–2 раза в сутки';r.maxDaily=4;r.trace.push('1–2 капли в каждый носовой ход 1–2 раза в сутки');
+    }
+    r.course='не дольше 5–7 дней';
+    add(r,'info','Противопоказан при артериальной гипертензии, тахикардии, глаукоме, атрофическом рините.');
+    return r;
+  }
+},
+{
+  id:'phenylephrine_nasal',name:'Фенилэфрин (в нос)',group:'nose',cls:'Сосудосуживающее для носа',rx:false,
+  brands:'Назол Бэби, Виброцил (+ диметинден)',
+  src:[['Фенилэфрин — описание вещества',RLS+'active-substance/fenilefrin-1451'],['Виброцил — инструкция',RLS+'drugs/vibrocil-186']],
+  def:{child:'d',adult:'v'},
+  forms:[
+    {id:'d',label:'Капли 0,125% (Назол Бэби)',kind:'drops',mgPerDrop:1,route:'интраназально'},
+    {id:'v',label:'Виброцил, капли (с 1 года)',kind:'drops',mgPerDrop:1,route:'интраназально'}
+  ],
+  calc(p,form){
+    const r=R();r.noMg=true;r.perNostril=true;r.doseNote='в каждый носовой ход';r.dailyNote='в каждый носовой ход';
+    if(form.id==='v'){
+      if(p.ageY<1)return stop(r,'Виброцил у детей до 1 года не изучен.');
+      if(p.ageY<6){r.doseMin=1;r.doseMax=2;r.trace.push('1–5 лет: 1–2 капли в каждый носовой ход 3–4 раза в день');}
+      else{r.doseMin=3;r.doseMax=4;r.trace.push('С 6 лет и взрослые: 3–4 капли 3–4 раза в день');}
+      r.timesMax=4;r.freq='3–4 раза в сутки';r.maxDaily=r.doseMax*4;r.course='не дольше 7 дней';
+      add(r,'info','Противопоказан при атрофическом рините, закрытоугольной глаукоме, приёме ингибиторов МАО.');
+    }else{
+      if(p.ageY<1){setFixed(r,1,4,'не чаще чем каждые 6 ч');r.trace.push('До 1 года: 1 капля в каждый носовой ход не чаще чем каждые 6 ч');}
+      else if(p.ageY<6){r.doseMin=1;r.doseMax=2;r.timesMax=4;r.freq='не чаще чем каждые 6 ч';r.maxDaily=8;r.trace.push('1–6 лет: 1–2 капли');}
+      else{r.doseMin=3;r.doseMax=4;r.timesMax=4;r.freq='не чаще чем каждые 6 ч';r.maxDaily=16;r.trace.push('Старше 6 лет и взрослые: 3–4 капли');}
+      r.course='не дольше 3–5 дней';
+    }
+    add(r,'info','Не применять при артериальной гипертензии и тахикардии.');
+    return r;
+  }
+},
+{
+  id:'mometasone',name:'Мометазон (в нос)',group:'nose',cls:'Гормональный спрей для носа',rx:true,
+  brands:'Назонекс, Нозефрин, Дезринит',
+  src:[['Назонекс — инструкция',RLS+'drugs/nazoneks-9212'],['Мометазон — описание вещества',RLS+'active-substance/mometazon-1145']],
+  def:{child:'sp',adult:'sp'},
+  forms:[{id:'sp',label:'Спрей 50 мкг/доза',kind:'unit',unit:'puff',mg:1,route:'интраназально'}],
+  calc(p){
+    const r=R();r.noMg=true;r.perNostril=true;r.dailyMode='total';r.doseNote='в каждый носовой ход';
+    if(p.ageY<2)return stop(r,'Детям до 2 лет не применяют.');
+    if(p.ageY<12){setFixed(r,1,1,'1 раз в сутки');r.dailyNote='суммарно 100 мкг';r.trace.push('2–11 лет: 1 впрыскивание (50 мкг) в каждый носовой ход 1 раз в сутки — 100 мкг в сутки');}
+    else{setFixed(r,2,1,'1 раз в сутки');r.dailyNote='суммарно 200 мкг (до 400 мкг)';r.trace.push('С 12 лет и взрослые: 2 впрыскивания в каждый носовой ход 1 раз в сутки — 200 мкг, при необходимости до 400 мкг');}
+    add(r,'info','Эффект — через 12 ч, полный — через несколько дней. Противопоказан при недавней травме или операции на носу.');
+    return r;
+  }
+},
+{
+  id:'prednisolone_po',name:'Преднизолон (таблетки)',group:'allergy',cls:'Глюкокортикоид',rx:true,
+  brands:'Преднизолон',
+  src:[['Преднизолон — описание вещества',RLS+'active-substance/prednizolon-297']],
+  srcNote:'Детская доза 1–2 мг/кг в сутки — РЛС. Начальная доза для взрослых 20–30 мг — по инструкции таблеток преднизолона.',
+  def:{child:'t5',adult:'t5'},
+  forms:[{id:'t5',label:'Таблетки 5 мг',kind:'unit',unit:'tab',mg:5,div:true,route:'внутрь'}],
+  calc(p){
+    const r=R();r.dailyMode='total';r.doseLabel='Суточная доза';r.timesMax=1;r.freq='большую часть утром';
+    if(p.ageY<18){r.basis='1–2 мг/кг в сутки';[r.doseMin,r.doseMax]=perKg(r,p.w,1,2,60);r.trace.push('Делят на 4–6 приёмов; поддерживающая доза — 0,3–0,6 мг/кг в сутки');}
+    else{r.doseMin=20;r.doseMax=30;r.trace.push('Взрослые: начальная доза 20–30 мг в сутки, поддерживающая — 5–10 мг');}
+    add(r,'warn','После курса дольше нескольких дней отменяют постепенно.');
+    add(r,'info','Принимать после еды. При кратковременном приёме по жизненным показаниям единственное противопоказание — гиперчувствительность.');
+    return r;
+  }
+},
+{
+  id:'nimesulide',name:'Нимесулид',group:'fever',cls:'Нестероидный противовоспалительный',rx:true,
+  brands:'Найз, Нимесил',
+  src:[['Найз — инструкция',RLS+'drugs/naiz-9677'],['Нимесулид — описание вещества',RLS+'active-substance/nimesulid-1749']],
+  def:{child:'t100',adult:'t100'},
+  forms:[
+    {id:'t100',label:'Таблетки 100 мг',kind:'unit',unit:'tab',mg:100,route:'внутрь'},
+    {id:'g100',label:'Гранулы 100 мг (пакетик)',kind:'unit',unit:'sachet',mg:100,route:'внутрь'}
+  ],
+  calc(p){
+    const r=R();
+    if(p.ageY<12)return stop(r,'Детям до 12 лет нимесулид противопоказан.');
+    if(p.liver)add(r,'stop','Печёночная недостаточность — противопоказан.');
+    if(lowCr(p,30))add(r,'stop',`${renalLabel(p)} < 30 — противопоказан.`);
+    pregNotes(r,p,{t3:['stop','III триместр беременности — противопоказан.'],preg:['warn','Беременность — только по назначению врача.'],lact:['stop','Грудное вскармливание — противопоказан.']});
+    setFixed(r,100,2,'2 раза в сутки');r.course='не дольше 15 дней';r.trace.push('С 12 лет и взрослые: 100 мг 2 раза в сутки, не более 200 мг');
+    add(r,'info','Принимать после еды. Противопоказан при язве ЖКТ, кровотечении, «аспириновой» астме.');
+    return r;
+  }
 }
+
 ];
 
 /* ---------- form conversion ---------- */
@@ -1244,7 +1591,7 @@ function syncOptions(d,formId){
     if(d.modes){
       $('#modes').innerHTML=d.modes.map(m=>`<input type="radio" name="mode" id="m_${d.id}_${m.id}" value="${m.id}"><label for="m_${d.id}_${m.id}">${m.label}</label>`).join('');
       $('#modeHint').textContent=d.modeHint||'';
-    }
+    }else $('#modes').innerHTML='';
     state.built=d.id;
   }
   const fi=document.getElementById(`f_${d.id}_${formId}`);if(fi)fi.checked=true;
@@ -1261,7 +1608,7 @@ let curTab='main';
 function render(){
   const p=readPatient();
   renderMetrics(p);
-  if(curTab==='smp')renderSmp(p);else renderMain(p);
+  if(KITS[curTab])renderKit(KITS[curTab],p);else renderMain(p);
 }
 function renderMain(p){
   const d=cur();
@@ -1308,22 +1655,23 @@ function renderMain(p){
   lastCopy='';
   if(!stopped&&c){
     const dp=amtParts(form,c.a,c.b);
+    const NM=!!r.noMg;
     const perKgTxt=`${rng(c.mgA/p.w,c.mgB/p.w,c.mgB/p.w<1?2:1)} мг/кг`;
     let dailyFig,dailyTxt='',trDaily='';
     if(r.dailyMode==='total'){
       const t=r.timesMax,ap=amtParts(form,c.a*t,c.b*t);
-      dailyFig=`<div class="fig"><span class="lab">Суточная доза</span><span class="val">${ap.num} <small>${ap.unit}</small></span><span class="sub">${mgR(c.mgA*t,c.mgB*t)} · ${rng(c.mgA*t/p.w,c.mgB*t/p.w,1)} мг/кг</span></div>`;
+      dailyFig=`<div class="fig"><span class="lab">Суточная доза</span><span class="val">${ap.num} <small>${ap.unit}</small></span><span class="sub">${NM?(r.dailyNote||'&nbsp;'):`${mgR(c.mgA*t,c.mgB*t)} · ${rng(c.mgA*t/p.w,c.mgB*t/p.w,1)} мг/кг`}</span></div>`;
       trDaily=`В сутки: ${t} × ${amt(form,c.a,c.b)} = ${amt(form,c.a*t,c.b*t)} (${mgR(c.mgA*t,c.mgB*t)})`;
     }else{
       const u=Math.floor(r.maxDaily/c.per/c.step+1e-6)*c.step;
       const ap=amtParts(form,u,u);
-      dailyFig=`<div class="fig"><span class="lab">Максимум в сутки</span><span class="val">${ap.num} <small>${ap.unit}</small></span><span class="sub">${mg(u*c.per)} · ${nf(u*c.per/p.w,u*c.per/p.w<1?2:1)} мг/кг</span></div>`;
-      dailyTxt=` Не более ${amtGen(form,u)} (${mg(u*c.per)}) в сутки.`;
+      dailyFig=`<div class="fig"><span class="lab">Максимум в сутки</span><span class="val">${ap.num} <small>${ap.unit}</small></span><span class="sub">${NM?(r.dailyNote||'&nbsp;'):`${mg(u*c.per)} · ${nf(u*c.per/p.w,u*c.per/p.w<1?2:1)} мг/кг`}</span></div>`;
+      dailyTxt=NM?` Не более ${amtGen(form,u)} в сутки.`:` Не более ${amtGen(form,u)} (${mg(u*c.per)}) в сутки.`;
       trDaily=`Суточный предел в этой форме: ${mg(r.maxDaily)} ÷ ${perDesc(form)} → не более ${amtGen(form,u)}`;
     }
     const sub2=[r.timesNote,r.course].filter(Boolean).join(' · ');
     html+=`<div class="figs">
-      <div class="fig main"><span class="lab">Разовая доза</span><span class="val">${dp.num} <small>${dp.unit}</small></span><span class="sub">${mgR(c.mgA,c.mgB)} · ${perKgTxt}</span></div>
+      <div class="fig main"><span class="lab">${r.doseLabel||'Разовая доза'}</span><span class="val">${dp.num} <small>${dp.unit}</small></span><span class="sub">${NM?(r.doseNote||'&nbsp;'):`${mgR(c.mgA,c.mgB)} · ${perKgTxt}`}</span></div>
       <div class="fig"><span class="lab">Как часто</span><span class="val txt">${r.freq}</span><span class="sub ui">${sub2||'&nbsp;'}</span></div>
       ${dailyFig}
     </div>`;
@@ -1334,7 +1682,7 @@ function renderMain(p){
       altTxt=ac.fit==='ok'?` Или ${amt(form,ac.a,ac.b)} ${r.alt.freq}.`:` Или ${mg(r.alt.dose)} ${r.alt.freq}.`;
     }
     const freqPart=`${r.freq}${r.timesNote?', '+r.timesNote:''}`;
-    const sText=`${amt(form,c.a,c.b)} ${form.route} ${freqPart}${r.course?', '+r.course:''}.${altTxt}${dailyTxt}`;
+    const sText=`${amt(form,c.a,c.b)} ${form.route}${r.perNostril?' в каждый носовой ход':''} ${freqPart}${r.course?', '+r.course:''}.${altTxt}${dailyTxt}`;
     const rpText=`${d.name}, ${form.label.charAt(0).toLowerCase()+form.label.slice(1)}`;
     lastCopy=`Rp.: ${rpText}\nS.: ${sText}`.replace(/ /g,' ');
     html+=`<div class="label-card" aria-label="Схема приёма">
@@ -1348,8 +1696,7 @@ function renderMain(p){
       :form.kind==='drops'
       ?`${mgR(r.doseMin,r.doseMax)} ÷ ${perDesc(form)} = ${rng(c.vMin,c.vMax,1)} → ${amt(form,c.a,c.b)}`
       :`${mgR(r.doseMin,r.doseMax)} ÷ ${perDesc(form)} = ${rng(c.vMin,c.vMax,2)} → ${amt(form,c.a,c.b)}${form.div?' (можно делить пополам)':''}`;
-    r.trace.push(conv);
-    if(trDaily)r.trace.push(trDaily);
+    if(!NM){r.trace.push(conv);if(trDaily)r.trace.push(trDaily);}
   }
 
   if(r.msgs.length)html+=`<ul class="msgs">${r.msgs.map(msgHTML).join('')}</ul>`;
@@ -1821,17 +2168,99 @@ const SMP=[
  regs:[{id:'im',label:'Отравление угарным газом',route:'в/м как можно раньше',a:{fix:[60,60]},freq:'повторно через 1 ч'}],cNo:KIDS}
 ];
 
-const smp={drug:'epinephrine',form:{},reg:{},built:null,builtReg:null};
-function renderSmpDrugs(){
-  $('#smpDrugs').innerHTML=SMP_GROUPS.map(g=>`<div class="dgroup" data-g="${g.id}"><div class="gname">${g.name}</div><div class="drow">${
-    SMP.filter(d=>d.g===g.id).map(d=>`<button type="button" class="drug" data-id="${d.id}" data-s="${(d.name+' '+(d.brands||'')).toLowerCase()}" aria-pressed="${d.id===smp.drug}"><span class="dn">${d.name}</span><small>${d.brands||d.forms[0].label}</small></button>`).join('')
-  }</div></div>`).join('')+'<p class="nores" id="smpNores" hidden>В укладке нет такого препарата.</p>';
-  $('#smpCnt').textContent=SMP.length;
+/* ================= Анестезиология ================= */
+const SMPd=id=>SMP.find(x=>x.id===id);
+const ANEST_GROUPS=[
+  {id:'hyp',name:'Гипнотики и анестетики'},
+  {id:'nmb',name:'Миорелаксанты и их реверсия'},
+  {id:'supp',name:'Анальгезия и поддержка гемодинамики'},
+  {id:'peri',name:'Премедикация и профилактика'}
+];
+const ANEST=[
+{id:'propofol',name:'Пропофол',brands:'Диприван, Пропован',g:'hyp',src:[['Пропофол — описание вещества',AS('propofol-538')],['Диприван',DR('diprivan-1229')]],
+ age:{m:1,msg:'Детям до 1 месяца для анестезии не применяется.'},
+ forms:[amp('a20','10 мг/мл (1%) · амп. 20 мл',10,'мг',20),amp('a50','10 мг/мл (1%) · флакон 50 мл',10,'мг',50),amp('b50','20 мг/мл (2%) · флакон 50 мл',20,'мг',50)],
+ regs:[{id:'ind',label:'Индукция анестезии',route:'в/в медленно, титровать по эффекту (около 40 мг каждые 10 с)',
+        a:{fn(p,r){if(p.ageY>=55){r.trace.push('Старше 55 лет — меньшие дозы; титровать по 20 мг каждые 10 с');return[1*p.w,1.5*p.w];}r.trace.push(`1,5–2,5 мг/кг × ${nf(p.w,1)} кг (до 55 лет)`);return[1.5*p.w,2.5*p.w];}},
+        c:{fn(p,r){if(p.ageY>=8){r.trace.push('Детям старше 8 лет: 2,5 мг/кг');return[2.5*p.w,2.5*p.w];}r.trace.push('Младше 8 лет может потребоваться больше 2,5 мг/кг — титровать медленно');return[2.5*p.w,3.5*p.w];}},
+        freq:'медленно, до клинических признаков анестезии'},
+       {id:'maint',label:'Поддержание анестезии',route:'в/в инфузия через перфузор',inf:{rate:[4,12],rateC:[9,15],ru:'мг/кг/ч',mix:{amt:500,ml:50},child:true,neat:true},freq:'неразведённый препарат; скорость подбирают индивидуально'},
+       {id:'sed',label:'Седация на ИВЛ (ОРИТ)',route:'в/в инфузия через перфузор',inf:{rate:[0.3,4],ru:'мг/кг/ч',mix:{amt:500,ml:50},neat:true},cNo:'Седация на ИВЛ у пациентов до 16 лет — противопоказание.',adultY:16,freq:'титровать до нужного уровня седации'}],
+ notes:[['warn','Апноэ и гипотензия при индукции: нужна готовность к ИВЛ. У пожилых и ослабленных — медленнее и меньше.']],
+ extra(p,r){if(p.bmi&&p.bmi>=30&&p.ageY>=18)r.msgs.push({lvl:'info',t:`ИМТ ${nf(p.bmi,1)}: расчёт выполнен по фактической массе — при ожирении индукционную дозу титруют по эффекту, начиная с нижней границы.`});}},
+{id:'thiopental',name:'Тиопентал натрия',g:'hyp',src:[['Тиопентал натрия — описание вещества',AS('tiopental-natriia-854')]],
+ srcNote:'В РЛС фиксированной дозы нет: дозу подбирают по возрасту, полу и массе. Ориентиры 3–5 мг/кг взрослым и 5–6 мг/кг детям — стандартная анестезиологическая практика.',
+ forms:[amp('v1','Флакон 1 г, развести до 25 мг/мл (2,5%) — 40 мл',25,'мг',40),amp('v05','Флакон 0,5 г, развести до 25 мг/мл (2,5%) — 20 мл',25,'мг',20)],
+ regs:[{id:'ind',label:'Индукция анестезии',route:'в/в медленно, только 1–2,5% раствор',a:{fn(p,r){const k=p.ageY>=60?[2,3]:[3,5];r.trace.push(`${rng(k[0],k[1])} мг/кг × ${nf(p.w,1)} кг${p.ageY>=60?' (пожилым — меньше)':''}`);return[k[0]*p.w,k[1]*p.w];}},c:{kg:[5,6]},freq:'сначала пробная доза 25–75 мг, далее титровать'}],
+ notes:[['info','Противопоказан при порфирии и аллергии на барбитураты. Осторожно при гипотензии, шоке, тяжёлой сердечной недостаточности.']]},
+{id:'ketamine',name:'Кетамин',g:'hyp',src:[['Кетамин — описание вещества',AS('ketamin-242')]],
+ forms:[amp('a2','50 мг/мл (5%) · амп. 2 мл',50,'мг',2),amp('a10','50 мг/мл (5%) · флакон 10 мл',50,'мг',10)],
+ regs:[{id:'iv',label:'Анестезия, в/в',route:'в/в медленно за 60 с',a:{fn(p,r){if(p.ageY>=65){r.trace.push('Пожилым, ослабленным, в шоке: 0,5 мг/кг');return[0.5*p.w,0.5*p.w];}r.trace.push(`Начальная доза 0,7–2 мг/кг × ${nf(p.w,1)} кг`);return[0.7*p.w,2*p.w];}},c:{kg:[0.5,2],t:'детям 0,5–4,5 мг/кг; начальная — до 2 мг/кг'},freq:'повторно — ½–⅓ начальной дозы',max:'взрослым суммарно 2–6 мг/кг/ч'},
+       {id:'im',label:'Анестезия, в/м',route:'в/м',a:{kg:[6.5,13]},c:{kg:[2,5]},freq:'наркоз 12–25 мин'}],
+ notes:[['info','Противопоказан при артериальной гипертензии, нарушении мозгового кровообращения, преэклампсии, алкоголизме; у детей — при эпилепсии.']]},
+{id:'oxybate',name:'Натрия оксибутират',brands:'ГОМК',g:'hyp',src:[['Натрия оксибутират — описание вещества',AS('natriia-oksibutirat-1487')]],
+ forms:[amp('a','200 мг/мл (20%) · амп. 10 мл',200,'мг',10)],
+ regs:[{id:'iv',label:'Общая анестезия, в/в',route:'в/в медленно (1–2 мл/мин) за 10–20 мин в 50–100 мл 5% глюкозы',a:{kg:[50,120]},c:{kg:[100,100],t:'вводный наркоз у детей'},freq:'поддержание — ещё 40 мг/кг'},
+       {id:'im',label:'Мононаркоз, в/м',route:'в/м',a:{kg:[120,150]},c:{kg:[120,150]}}],
+ notes:[['warn','Противопоказан при гипокалиемии и миастении; контроль калия.']]},
+{id:'rocuronium',name:'Рокурония бромид',brands:'Эсмерон',g:'nmb',src:[['Рокурония бромид — описание вещества',AS('rokuroniia-bromid-2515')],['Эсмерон',DR('esmeron-15085')]],
+ srcNote:'Дозы — РЛС. Доза 1,0 мг/кг для быстрой последовательной индукции и расчёт по идеальной массе при ожирении — по инструкции Эсмерона.',
+ wb:'ibwObese',
+ forms:[amp('a5','10 мг/мл · флакон 5 мл (50 мг)',10,'мг',5),amp('a10','10 мг/мл · флакон 10 мл (100 мг)',10,'мг',10)],
+ regs:[{id:'int',label:'Интубация',route:'в/в болюс',a:{kg:[0.6,0.6]},c:{kg:[0.6,0.6]},freq:'условия для интубации — через 60–90 с'},
+       {id:'rsi',label:'Быстрая последовательная индукция',route:'в/в болюс',a:{kg:[1,1]},c:{stop:'Схема для взрослых.'},freq:'условия для интубации — через 60 с'},
+       {id:'mnt',label:'Поддерживающие дозы',route:'в/в болюс при начале восстановления (TOF)',a:{kg:[0.1,0.2]},c:{kg:[0.075,0.125]},freq:'взрослым через 12–24 мин; детям продлевает блок на 7–10 мин'},
+       {id:'inf',label:'Инфузия',route:'в/в через перфузор, под контролем TOF',inf:{rate:[10,12],ru:'мкг/кг/мин',mix:{amt:50,ml:5},child:true,neat:true},freq:'при ингаляционных анестетиках скорость снижают на 40%'}],
+ notes:[['warn','Вводить только при возможности ИВЛ. Держите наготове сугаммадекс.']]},
+{id:'sugammadex',name:'Сугаммадекс',brands:'Брайдан',g:'nmb',src:[['Брайдан',DR('braidan-39747')]],
+ srcNote:'Текст описания Брайдана в РЛС не загрузился. Дозы — по инструкции Брайдана: всегда по фактической массе тела.',
+ age:{y:2,msg:'Детям до 2 лет — нет данных, не применяют.'},
+ forms:[amp('a2','100 мг/мл · флакон 2 мл (200 мг)',100,'мг',2),amp('a5','100 мг/мл · флакон 5 мл (500 мг)',100,'мг',5)],
+ regs:[{id:'rout',label:'Плановая реверсия (TOF: появился T2)',route:'в/в болюс',a:{kg:[2,2]},c:{kg:[2,2]},freq:'однократно'},
+       {id:'deep',label:'Глубокий блок (1–2 ответа PTC)',route:'в/в болюс',a:{kg:[4,4]},c:{stop:'У детей 2–17 лет изучена только плановая реверсия (2 мг/кг).'},freq:'однократно'},
+       {id:'imm',label:'Немедленная реверсия (через 3 мин после 1,2 мг/кг рокурония)',route:'в/в болюс',a:{kg:[16,16]},c:{stop:'У детей 2–17 лет изучена только плановая реверсия (2 мг/кг).'},freq:'однократно'}],
+ renal:[30,'warn','{rl} < 30 — применение не рекомендуется.'],
+ notes:[['info','Расчёт — по фактической массе тела, в том числе при ожирении. Повторная блокада рокуронием в течение 24 ч требует увеличенных доз.']]},
+SMPd('tramadol'),
+SMPd('dopamine'),
+{id:'heparin_an',name:'Гепарин натрия',g:'supp',src:[['Гепарин натрия — описание вещества',AS('geparin-natriia-423')]],
+ srcNote:'В РЛС режим «индивидуальный». Профилактическая и болюсные дозы — по клиническим рекомендациям Минздрава.',
+ forms:[amp('a','5000 ЕД/мл · флакон 5 мл',5000,'ЕД',5)],
+ regs:[{id:'proph',label:'Профилактика тромбоэмболий',route:'п/к',a:{fix:[5000,5000]},freq:'за 2 ч до операции, далее каждые 8–12 ч'},
+       {id:'oks',label:'ОКС, в/в болюс',route:'в/в болюсно',a:{kg:[60,70],max:5000},freq:'далее инфузия под контролем АЧТВ'},
+       {id:'tela',label:'ТЭЛА, тромбоз, в/в болюс',route:'в/в болюсно',a:{kg:[80,80],max:10000},freq:'далее инфузия 18 ЕД/кг/ч под контролем АЧТВ'}],
+ cNo:KIDS,notes:[['info','Противопоказан при кровотечении, тромбоцитопении (в т.ч. гепарин-индуцированной), геморрагическом диатезе.']]},
+SMPd('diphenhydramine'),
+{id:'cefepime',name:'Цефепим',brands:'Максипим',g:'peri',src:[['Максипим — инструкция',DR('maksipim-7479')],['Цефепим — описание вещества',AS('cefepim-2114')]],
+ adultY:0,
+ age:{m:2,msg:'Детям до 2 месяцев не применяют.'},
+ forms:[vial('v1','Флакон 1 г',1000,'мг'),vial('v2','Флакон 2 г',2000,'мг')],
+ regs:[{id:'proph',label:'Профилактика в абдоминальной хирургии',route:'в/в за 30 мин, за 60 мин до разреза',a:{fn(p,r){if(p.w>40){r.trace.push('2 г в/в за 60 мин до операции (с метронидазолом 500 мг)');return[2000,2000];}r.trace.push(`Масса ≤ 40 кг: 50 мг/кг × ${nf(p.w,1)} кг`);return[50*p.w,50*p.w];}},freq:'повтор через 12 ч, если операция длительная'},
+       {id:'std',label:'Лечение инфекции',route:'в/в за 30 мин или в/м',a:{fn(p,r){if(p.w>40){r.trace.push('Масса > 40 кг: 1–2 г (лёгкие инфекции 0,5–1 г)');return[1000,2000];}r.trace.push(`Масса ≤ 40 кг: 50 мг/кг × ${nf(p.w,1)} кг`);return[50*p.w,Math.min(50*p.w,2000)];}},freq:'каждые 12 ч (при нейтропенической лихорадке — каждые 8 ч)',max:'детям не выше взрослой дозы'}],
+ renal:[60,'warn','{rl} ≤ 60: первая доза обычная, далее интервал увеличивают — по таблице инструкции.'],
+ notes:[['info','Противопоказан при аллергии на бета-лактамы. Разводят 0,9% NaCl или 5% глюкозой.']]},
+{id:'omeprazole_iv',name:'Омепразол (в/в)',brands:'Лосек (лиофилизат)',g:'peri',src:[['Лосек — инструкция',DR('losek-1223')]],
+ forms:[vial('v','Флакон 40 мг (лиофилизат)',40,'мг')],
+ regs:[{id:'iv',label:'Язва, рефлюкс-эзофагит, профилактика аспирации',route:'в/в инфузия за 20–30 мин в 100 мл 0,9% NaCl или 5% глюкозы',a:{fix:[40,40]},freq:'1 раз в сутки',max:'при синдроме Золлингера — Эллисона 60 мг; выше 60 мг — в 2 введения'}],
+ cNo:KIDS,liver:['warn','Нарушение функции печени: может быть достаточно 10–20 мг в сутки.']}
+];
+
+SMPd('tramadol').agMap='supp';SMPd('dopamine').agMap='supp';SMPd('diphenhydramine').agMap='peri';
+
+/* ================= Вкладки-укладки (СМП, анестезиология) ================= */
+function makeKit(key,list,groups,def){return{key,list,groups,st:{drug:def,form:{},reg:{},built:null,builtReg:null},copy:''};}
+const KITS={smp:makeKit('smp',SMP,SMP_GROUPS,'epinephrine'),anest:makeKit('anest',ANEST,ANEST_GROUPS,'propofol')};
+const E=(K,s)=>document.getElementById(K.key+s);
+function renderKitDrugs(K){
+  E(K,'Drugs').innerHTML=K.groups.map(g=>`<div class="dgroup" data-g="${g.id}"><div class="gname">${g.name}</div><div class="drow">${
+    K.list.filter(d=>(d.ag||d.g)===g.id||(K.key==='anest'&&d.agMap===g.id)).map(d=>`<button type="button" class="drug" data-id="${d.id}" data-s="${(d.name+' '+(d.brands||'')).toLowerCase()}" aria-pressed="${d.id===K.st.drug}"><span class="dn">${d.name}</span><small>${d.brands||d.forms[0].label}</small></button>`).join('')
+  }</div></div>`).join('')+`<p class="nores" id="${K.key}Nores" hidden>Такого препарата нет в этой вкладке.</p>`;
+  const c=E(K,'Cnt');if(c)c.textContent=K.list.length;
 }
-function filterSmp(){
-  const q=$('#smpQ').value.trim().toLowerCase().replace(/ё/g,'е');let any=false;
-  document.querySelectorAll('#smpDrugs .dgroup').forEach(g=>{let v=0;g.querySelectorAll('.drug').forEach(b=>{const ok=!q||b.dataset.s.replace(/ё/g,'е').includes(q);b.hidden=!ok;if(ok)v++;});g.hidden=!v;if(v)any=true;});
-  $('#smpNores').hidden=any;
+function filterKit(K){
+  const q=E(K,'Q').value.trim().toLowerCase().replace(/ё/g,'е');let any=false;
+  E(K,'Drugs').querySelectorAll('.dgroup').forEach(g=>{let v=0;g.querySelectorAll('.drug').forEach(b=>{const ok=!q||b.dataset.s.replace(/ё/g,'е').includes(q);b.hidden=!ok;if(ok)v++;});g.hidden=!v;if(v)any=true;});
+  E(K,'Nores').hidden=any;
 }
 function evalSpec(s,p,r,u,f){
   let lo,hi;
@@ -1841,7 +2270,7 @@ function evalSpec(s,p,r,u,f){
   else if(s.daily){const dl=s.daily[0]*p.w,dh=s.daily[1]*p.w;lo=dl/s.n[0];hi=dh/s.n[1];r.perKg=true;r.trace.push(`Суточная ${rng(s.daily[0],s.daily[1])} ${u}/кг × ${nf(p.w,1)} кг = ${fUR(dl,dh,u)} → на одно введение (${s.n[1]}–${s.n[0]} введения) ${fUR(lo,hi,u)}`);}
   else if(s.age){const row=s.age.find(x=>p.ageY<x[0])||s.age[s.age.length-1];lo=row[1];hi=row[2];r.trace.push(`По возрасту (${row[3]}): ${fUR(lo,hi,u)}${s.t?' — '+s.t:''}`);}
   else if(s.wt){const row=s.wt.find(x=>p.w<x[0]);lo=row[1];hi=row[2];r.trace.push(`По массе (${row[3]}): ${fUR(lo,hi,u)}`);}
-  else if(s.fn){[lo,hi]=s.fn(p,r,f);}
+  else if(s.fn){[lo,hi]=s.fn(p,r,f);r.perKg=true;}
   if(s.max!=null&&hi>s.max){hi=s.max;if(lo>hi)lo=hi;r.trace.push(`Не более ${fU(s.max,u)} → ${fUR(lo,hi,u)}`);}
   return[lo,hi];
 }
@@ -1854,6 +2283,7 @@ function smpCalc(d,f,reg,p){
   if(d.renal&&p.crcl!=null&&p.crcl<d.renal[0])A(d.renal[1],d.renal[2].replace('{rl}',renalLabel(p)));
   (d.notes||[]).forEach(n=>A(n[0],n[1]));
   if(d.extra)d.extra(p,r);
+  if(d.wb==='ibwObese'&&p.ibw&&p.w>1.3*p.ibw){A('warn',`Ожирение (масса на ${Math.round((p.w/p.ibw-1)*100)}% выше идеальной): доза рассчитана по идеальной массе ${nf(p.ibw,1)} кг.`);p=Object.assign({},p,{w:p.ibw});r.wNote=`по идеальной массе ${nf(p.ibw,1)} кг`;}
   if(!reg)return r;
   (reg.notes||[]).forEach(n=>A(n[0],n[1]));
   const adult=p.ageY>=(reg.adultY??d.adultY??18);
@@ -1861,15 +2291,17 @@ function smpCalc(d,f,reg,p){
   if(reg.custom){r.kind='custom';r.rows=[];reg.custom(p,r,f);return r;}
   if(reg.inf){
     const I=reg.inf;
-    if(!adult&&!I.child){A('stop',d.cNo||KIDS);return r;}
-    const perKg=I.ru==='мкг/кг/мин';
-    const toMcgMin=v=>I.ru==='мг/ч'?v*1000/60:perKg?v*p.w:v;
-    const conc=(f.unit==='мг'?I.mix.amt*1000:I.mix.amt)/I.mix.ml;
-    const lo=toMcgMin(I.rate[0]),hi=toMcgMin(I.rate[1]);
-    r.kind='inf';r.inf={I,perKg,lo,hi,conc,mlhLo:lo*60/conc,mlhHi:hi*60/conc,drugMl:I.mix.amt/f.c};
-    r.trace.push(`Разведение: ${fU(I.mix.amt,f.unit)} (${fN(I.mix.amt/f.c)} мл препарата) до ${I.mix.ml} мл → ${conc>=1000?fU(conc/1000,'мг')+'/мл':fU(conc,'мкг')+'/мл'}`);
-    if(perKg)r.trace.push(`${rng(I.rate[0],I.rate[1],2)} мкг/кг/мин × ${nf(p.w,1)} кг = ${fUR(lo,hi,'мкг')}/мин`);
-    r.trace.push(`Скорость насоса = доза в мкг/мин × 60 ÷ ${fN(conc)} мкг/мл = ${fN(r.inf.mlhLo)}–${fN(r.inf.mlhHi)} мл/ч`);
+    if(!adult&&!I.child){A('stop',reg.cNo||d.cNo||KIDS);return r;}
+    const rate=(!adult&&I.rateC)?I.rateC:I.rate;
+    const kgH=I.ru==='мг/кг/ч',perKg=I.ru==='мкг/кг/мин'||kgH;
+    const toMcgMin=v=>I.ru==='мг/ч'?v*1000/60:kgH?v*p.w*1000/60:perKg?v*p.w:v;
+    const conc=I.neat?(f.unit==='мг'?f.c*1000:f.c):(f.unit==='мг'?I.mix.amt*1000:I.mix.amt)/I.mix.ml;
+    const lo=toMcgMin(rate[0]),hi=toMcgMin(rate[1]);
+    r.kind='inf';r.inf={I,rate,kgH,perKg,lo,hi,conc,mlhLo:lo*60/conc,mlhHi:hi*60/conc,drugMl:I.mix.amt/f.c};
+    r.trace.push(I.neat?`Неразведённый препарат: ${conc>=1000?fU(conc/1000,'мг')+'/мл':fU(conc,'мкг')+'/мл'}`:`Разведение: ${fU(I.mix.amt,f.unit)} (${fN(I.mix.amt/f.c)} мл препарата) до ${I.mix.ml} мл → ${conc>=1000?fU(conc/1000,'мг')+'/мл':fU(conc,'мкг')+'/мл'}`);
+    if(kgH)r.trace.push(`${rng(rate[0],rate[1],2)} мг/кг/ч × ${nf(p.w,1)} кг = ${fN(lo*60/1000)}–${fU(hi*60/1000,'мг')}/ч`);
+    else if(perKg)r.trace.push(`${rng(rate[0],rate[1],3)} мкг/кг/мин × ${nf(p.w,1)} кг = ${fUR(lo,hi,'мкг')}/мин`);
+    r.trace.push(`Скорость насоса = доза ÷ концентрация = ${fN(r.inf.mlhLo)}–${fN(r.inf.mlhHi)} мл/ч`);
     return r;
   }
   const spec=adult?reg.a:reg.c;
@@ -1877,7 +2309,7 @@ function smpCalc(d,f,reg,p){
   if(spec.stop){A('stop',spec.stop);return r;}
   const u=f.unit;
   const [lo,hi]=evalSpec(spec,p,r,u,f);
-  r.kind='bolus';r.lo=lo;r.hi=hi;r.u=u;r.daily=reg.daily;
+  r.kind='bolus';r.lo=lo;r.hi=hi;r.u=u;r.daily=reg.daily;r.wkg=p.w;
   const dil=adult?reg.dil:(reg.dilC||reg.dil);
   r.dil=dil||null;
   return r;
@@ -1890,42 +2322,42 @@ function countRange(f,lo,hi){
 }
 function cntTxt(f,a,b){const key=f.kind==='tab'?'tab':f.kind==='puff'?'puff':'vial';return (same(a,b)?fr(a):fr(a)+'–'+fr(b))+' '+nomWord(b,key);}
 function volTxt(v){return v<1?nf(Math.round(v*100)/100,2):nf(Math.round(v*10)/10,1);}
-
-function syncSmpOptions(d){
-  if(smp.built!==d.id){
-    $('#smpForms').innerHTML=d.forms.map(f=>`<input type="radio" name="smpForm" id="sf_${d.id}_${f.id}" value="${f.id}"><label for="sf_${d.id}_${f.id}">${f.label}</label>`).join('');
-    smp.built=d.id;smp.builtReg=null;
+function syncKitOptions(K,d){
+  const st=K.st;
+  if(st.built!==d.id){
+    E(K,'Forms').innerHTML=d.forms.map(f=>`<input type="radio" name="${K.key}Form" id="${K.key}f_${d.id}_${f.id}" value="${f.id}"><label for="${K.key}f_${d.id}_${f.id}">${f.label}</label>`).join('');
+    st.built=d.id;st.builtReg=null;
   }
-  const fId=smp.form[d.id]||d.forms[0].id;
-  const fi=document.getElementById(`sf_${d.id}_${fId}`);if(fi)fi.checked=true;
+  const fId=st.form[d.id]||d.forms[0].id;
+  const fi=document.getElementById(`${K.key}f_${d.id}_${fId}`);if(fi)fi.checked=true;
   const f=d.forms.find(x=>x.id===fId)||d.forms[0];
   const regs=(d.regs||[]).filter(g=>!g.f||g.f.includes(f.id));
   const key=d.id+'|'+f.id;
-  if(smp.builtReg!==key){
-    $('#smpRegRow').hidden=regs.length<2;
-    $('#smpRegs').innerHTML=regs.map(g=>`<input type="radio" name="smpReg" id="sr_${d.id}_${g.id}" value="${g.id}"><label for="sr_${d.id}_${g.id}">${g.label}</label>`).join('');
-    smp.builtReg=key;
+  if(st.builtReg!==key){
+    E(K,'RegRow').hidden=regs.length<2;
+    E(K,'Regs').innerHTML=regs.map(g=>`<input type="radio" name="${K.key}Reg" id="${K.key}r_${d.id}_${g.id}" value="${g.id}"><label for="${K.key}r_${d.id}_${g.id}">${g.label}</label>`).join('');
+    st.builtReg=key;
   }
-  let reg=regs.find(g=>g.id===smp.reg[d.id])||regs[0]||null;
-  if(reg){const ri=document.getElementById(`sr_${d.id}_${reg.id}`);if(ri)ri.checked=true;}
+  const reg=regs.find(g=>g.id===st.reg[d.id])||regs[0]||null;
+  if(reg){const ri=document.getElementById(`${K.key}r_${d.id}_${reg.id}`);if(ri)ri.checked=true;}
   return{f,reg};
 }
-
-let smpCopy='';
-function renderSmp(p){
-  const d=SMP.find(x=>x.id===smp.drug);
-  const {f,reg}=syncSmpOptions(d);
-  const el=$('#smpResult');
+function renderKit(K,p){
+  const d=K.list.find(x=>x.id===K.st.drug);
+  const {f,reg}=syncKitOptions(K,d);
+  const el=E(K,'Result');
   const who=p.ok?`${ageText(p)} · ${p.sex==='m'?'муж.':'жен.'} · ${nf(p.w,1)} кг${p.h?` · ${nf(p.h,0)} см`:''}`:'';
-  const grp=SMP_GROUPS.find(g=>g.id===d.g).name;
+  const gid=K.key==='anest'?(d.agMap||d.g):d.g;
+  const grp=(K.groups.find(g=>g.id===gid)||{name:''}).name;
   const srcHTML=`<div class="src"><div><span class="lbl">Источник</span>${d.src.map(s=>`<a href="${s[1]}" target="_blank" rel="noopener">${s[0]}</a>`).join(' · ')} — РЛС</div>${d.srcNote?`<p>${d.srcNote}</p>`:''}</div>`;
-  const head=(status)=>`<div class="res-head"><div><div class="eyebrow">${grp}</div><h2>${d.name}</h2>${d.brands?`<div class="brands">${d.brands}</div>`:''}${who?`<div class="who">${who}</div>`:''}</div><div class="pills">${status?`<span class="pill ${status[0]}">${status[1]}</span>`:''}<span class="pill plain">${f.label}</span></div></div>`;
-  smpCopy='';
+  const head=status=>`<div class="res-head"><div><div class="eyebrow">${grp}</div><h2>${d.name}</h2>${d.brands?`<div class="brands">${d.brands}</div>`:''}${who?`<div class="who">${who}</div>`:''}</div><div class="pills">${status?`<span class="pill ${status[0]}">${status[1]}</span>`:''}<span class="pill plain">${f.label}</span></div></div>`;
+  const cardCopy=txt=>`<div class="label-card"><div class="ln"><span class="k">S.:</span><span>${txt}</span></div><div class="foot"><span class="copied" id="${K.key}Copied" aria-live="polite"></span><button type="button" class="copy" id="${K.key}CopyBtn">Скопировать</button></div></div>`;
+  K.copy='';
   if(!d.regs){
-    el.innerHTML=head(null)+`<div class="res-body"><p class="info-text">${d.info}</p>${d.link?'<button type="button" class="linkbtn" id="smpLink">Открыть расчёт во вкладке «Амбулаторные формы»</button>':''}${srcHTML}</div>`;
+    el.innerHTML=head(null)+`<div class="res-body"><p class="info-text">${d.info}</p>${d.link?`<button type="button" class="linkbtn" id="${K.key}Link" data-link="${d.link}">Открыть расчёт во вкладке «Амбулаторные формы»</button>`:''}${srcHTML}</div>`;
     return;
   }
-  if(!p.ok){el.innerHTML=`<div class="empty"><h2>${d.name}</h2><p>Укажите возраст и вес пациента — здесь появятся доза, объём из ампулы и способ введения.</p></div>`;return;}
+  if(!p.ok){el.innerHTML=`<div class="empty"><h2>${d.name}</h2><p>Укажите возраст и вес пациента — здесь появятся доза, объём и способ введения.</p></div>`;return;}
   const r=smpCalc(d,f,reg,p);
   if(p.implausible)r.msgs.push({lvl:'warn',t:`ИМТ ${nf(p.bmi,1)} — похоже на ошибку ввода. Проверьте вес и рост.`});
   const stopped=r.msgs.some(m=>m.lvl==='stop');
@@ -1935,7 +2367,7 @@ function renderSmp(p){
   const how=`<div class="fig"><span class="lab">Как вводить</span><span class="val txt">${r.route||'—'}</span><span class="sub ui">${[r.freq,r.maxT].filter(Boolean).join(' · ')||'&nbsp;'}</span></div>`;
   if(!stopped&&r.kind==='bolus'){
     const u=r.u;const doseNum=same(r.lo,r.hi)?fN(r.lo):fN(r.lo)+'–'+fN(r.hi);
-    const sub1=r.perKg?`${rng(r.lo/p.w,r.hi/p.w,3)} ${u}/кг`:(r.daily?'суточная доза':(r.adult?'доза для взрослых':'доза для ребёнка'));
+    const sub1=r.perKg?`${rng(r.lo/r.wkg,r.hi/r.wkg,3)} ${u}/кг${r.wNote?' · '+r.wNote:''}`:(r.daily?'суточная доза':(r.adult?'доза для взрослых':'доза для ребёнка'));
     let fig2='',amtTxt='';
     if(f.kind==='amp'||f.kind==='neb'){
       const c=r.dil?r.dil.c:f.c;const v1=r.lo/c,v2=r.hi/c;
@@ -1947,53 +2379,54 @@ function renderSmp(p){
       fig2=`<div class="fig"><span class="lab">${r.dil?'Объём разведённого':'Объём'}</span><span class="val">${vt} <small>мл</small></span><span class="sub ui">${sub}</span></div>`;
       amtTxt=`${vt} мл${f.kind==='neb'?'':' '+(r.dil?'разведённого раствора':'раствора '+f.label.split(' · ')[0])}`;
     }else if(f.kind==='tab'||f.kind==='puff'||f.kind==='vial'){
-      const [a,b]=countRange(f,r.lo,r.hi);const t=cntTxt(f,a,b);const pp=amtParts({kind:'unit',unit:f.kind==='tab'?'tab':f.kind==='puff'?'puff':'vial'},a,b);
+      const [a,b]=countRange(f,r.lo,r.hi);const pp=amtParts({kind:'unit',unit:f.kind==='tab'?'tab':f.kind==='puff'?'puff':'vial'},a,b);
       fig2=`<div class="fig"><span class="lab">Количество</span><span class="val">${pp.num} <small>${pp.unit}</small></span><span class="sub ui">${f.label}</span></div>`;
-      amtTxt=t;
+      amtTxt=cntTxt(f,a,b);
     }else{fig2=`<div class="fig"><span class="lab">Форма</span><span class="val txt">${f.label}</span><span class="sub ui">&nbsp;</span></div>`;}
     html+=`<div class="figs"><div class="fig main"><span class="lab">Доза</span><span class="val">${doseNum} <small>${u}</small></span><span class="sub">${sub1}</span></div>${fig2}${how}</div>`;
     const sText=`${d.name} ${fUR(r.lo,r.hi,u)}${amtTxt?` (${amtTxt})`:''} ${r.route}${r.freq?', '+r.freq:''}.${r.maxT?' '+r.maxT[0].toUpperCase()+r.maxT.slice(1)+'.':''}`;
-    smpCopy=sText.replace(/ /g,' ');
-    html+=`<div class="label-card"><div class="ln"><span class="k">S.:</span><span>${sText}</span></div><div class="foot"><span class="copied" id="smpCopied" aria-live="polite"></span><button type="button" class="copy" id="smpCopyBtn">Скопировать</button></div></div>`;
+    K.copy=sText.replace(/ /g,' ');html+=cardCopy(sText);
   }else if(!stopped&&r.kind==='inf'){
     const I=r.inf;
-    const doseV=`${rng(I.I.rate[0],I.I.rate[1],2)} <small>${I.I.ru}</small>`;
-    const sub1=I.perKg?`${fN(I.lo)}–${fU(I.hi,'мкг')}/мин`:(I.I.ru==='мг/ч'?`${fN(I.lo)}–${fU(I.hi,'мкг')}/мин`:'диапазон титрования');
+    const sub1=I.kgH?`${fN(I.lo*60/1000)}–${fU(I.hi*60/1000,'мг')}/ч`:(I.perKg||I.I.ru==='мг/ч')?`${fN(I.lo)}–${fU(I.hi,'мкг')}/мин`:'диапазон титрования';
     const n=Math.ceil(I.drugMl/f.amp-1e-6);
-    html+=`<div class="figs"><div class="fig main"><span class="lab">Доза</span><span class="val">${doseV}</span><span class="sub">${sub1}</span></div>
-      <div class="fig"><span class="lab">Скорость перфузора</span><span class="val">${fN(I.mlhLo)}–${fN(I.mlhHi)} <small>мл/ч</small></span><span class="sub ui">при разведении ${fU(I.I.mix.amt,f.unit)} в ${I.I.mix.ml} мл</span></div>
-      <div class="fig"><span class="lab">Разведение</span><span class="val txt">${fN(I.drugMl)} мл препарата до ${I.I.mix.ml} мл</span><span class="sub ui">${n} ${plural(n,NOUN.ampN.nom)} · ${I.conc>=1000?fU(I.conc/1000,'мг'):fU(I.conc,'мкг')}/мл</span></div></div>`;
+    const dilV=I.I.neat?`Без разведения`:`${fN(I.drugMl)} мл препарата до ${I.I.mix.ml} мл`;
+    const dilS=I.I.neat?`${I.conc>=1000?fU(I.conc/1000,'мг'):fU(I.conc,'мкг')}/мл · шприц ${I.I.mix.ml} мл`:`${n} ${plural(n,NOUN.ampN.nom)} · ${I.conc>=1000?fU(I.conc/1000,'мг'):fU(I.conc,'мкг')}/мл`;
+    html+=`<div class="figs"><div class="fig main"><span class="lab">Доза</span><span class="val">${rng(I.rate[0],I.rate[1],3)} <small>${I.I.ru}</small></span><span class="sub">${sub1}${r.wNote?' · '+r.wNote:''}</span></div>
+      <div class="fig"><span class="lab">Скорость перфузора</span><span class="val">${fN(I.mlhLo)}–${fN(I.mlhHi)} <small>мл/ч</small></span><span class="sub ui">${I.I.neat?'неразведённый препарат':`при разведении ${fU(I.I.mix.amt,f.unit)} в ${I.I.mix.ml} мл`}</span></div>
+      <div class="fig"><span class="lab">Разведение</span><span class="val txt">${dilV}</span><span class="sub ui">${dilS}</span></div></div>`;
     html+=`<div class="figs" style="grid-template-columns:1fr">${how}</div>`;
-    smpCopy=`${d.name}: ${fU(I.I.mix.amt,f.unit)} до ${I.I.mix.ml} мл, ${rng(I.I.rate[0],I.I.rate[1],2)} ${I.I.ru} = ${fN(I.mlhLo)}–${fN(I.mlhHi)} мл/ч.`;
+    K.copy=`${d.name}: ${I.I.neat?'без разведения':`${fU(I.I.mix.amt,f.unit)} до ${I.I.mix.ml} мл`}, ${rng(I.rate[0],I.rate[1],3)} ${I.I.ru} = ${fN(I.mlhLo)}–${fN(I.mlhHi)} мл/ч.`.replace(/ /g,' ');
   }else if(!stopped&&r.kind==='custom'){
     html+=`<div class="rows">${r.rows.map(x=>`<div class="row${x.total?' total':''}"><span class="k">${x.k}</span><span class="v">${x.v}</span><span class="s">${x.s||''}</span></div>`).join('')}</div>`;
-    smpCopy=`${d.name}, ${reg.label}: `+r.rows.map(x=>`${x.k} — ${x.v}${x.s?' ('+x.s+')':''}`).join('; ').replace(/ /g,' ');
-    html+=`<div class="label-card"><div class="ln"><span class="k">S.:</span><span>${smpCopy}</span></div><div class="foot"><span class="copied" id="smpCopied" aria-live="polite"></span><button type="button" class="copy" id="smpCopyBtn">Скопировать</button></div></div>`;
+    K.copy=(`${d.name}, ${reg.label}: `+r.rows.map(x=>`${x.k} — ${x.v}${x.s?' ('+x.s+')':''}`).join('; ')).replace(/ /g,' ');
+    html+=cardCopy(K.copy);
   }
   if(r.msgs.length)html+=`<ul class="msgs">${r.msgs.map(msgHTML).join('')}</ul>`;
   if(r.trace.length&&!stopped)html+=`<details class="trace" open><summary>Как посчитано</summary><ol>${r.trace.map(t=>`<li>${t}</li>`).join('')}</ol></details>`;
   html+=srcHTML+'</div>';
   el.innerHTML=html;
 }
+const TABS=['main','smp','anest'];
 function setTab(t){
-  curTab=t==='smp'?'smp':'main';
-  $('#paneMain').hidden=curTab!=='main';$('#paneSmp').hidden=curTab!=='smp';
-  $('#tabMain').setAttribute('aria-selected',String(curTab==='main'));$('#tabSmp').setAttribute('aria-selected',String(curTab==='smp'));
-  const want=curTab==='smp'?'#smp':'';
+  curTab=TABS.includes(t)?t:'main';
+  $('#paneMain').hidden=curTab!=='main';$('#paneSmp').hidden=curTab!=='smp';$('#paneAnest').hidden=curTab!=='anest';
+  document.querySelectorAll('.tabs [data-tab]').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.tab===curTab)));
+  const want=curTab==='main'?'':'#'+curTab;
   if(location.hash!==want){try{history.replaceState(null,'',want||location.pathname+location.search);}catch(e){}}
   render();
 }
 
 /* ---------- events ---------- */
 document.addEventListener('input',e=>{
-  if(e.target.id==='drugQ'){filterDrugs();return;}
-  if(e.target.id==='smpQ'){filterSmp();return;}
-  if(e.target.closest('.panel')&&!e.target.matches('[name=form],[name=mode],[name=smpForm],[name=smpReg]'))render();
+  const id=e.target.id;
+  if(id==='drugQ'){filterDrugs();return;}
+  if(id==='smpQ'||id==='anestQ'){filterKit(KITS[id.slice(0,-1)]);return;}
+  if(e.target.closest('.panel')&&!e.target.matches('[name=form],[name=mode],[name=smpForm],[name=smpReg],[name=anestForm],[name=anestReg]'))render();
 });
 document.addEventListener('change',e=>{
-  const t=e.target;
-  if(t.name==='smpForm'){smp.form[smp.drug]=t.value;render();}
-  else if(t.name==='smpReg'){smp.reg[smp.drug]=t.value;render();}
+  const t=e.target,m=/^(smp|anest)(Form|Reg)$/.exec(t.name||'');
+  if(m){const K=KITS[m[1]];(m[2]==='Form'?K.st.form:K.st.reg)[K.st.drug]=t.value;render();}
   else if(t.name==='form'){state.form[state.drug]=t.value;render();}
   else if(t.name==='mode'){state.mode[state.drug]=t.value;render();}
   else if(t.name==='sex'||t.id==='preg'||t.id==='liver'||t.id==='creatUnit')render();
@@ -2001,7 +2434,7 @@ document.addEventListener('change',e=>{
 $('#drugs').addEventListener('click',e=>{
   const b=e.target.closest('.drug');if(!b)return;
   state.drug=b.dataset.id;
-  document.querySelectorAll('.drug').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
+  document.querySelectorAll('#drugs .drug').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
   render();
 });
 document.querySelector('.presets').addEventListener('click',e=>{
@@ -2021,30 +2454,32 @@ $('#result').addEventListener('click',e=>{
   const fallback=()=>{const ln=$('#result .label-card');const sel=window.getSelection();const rg=document.createRange();rg.selectNodeContents(ln);sel.removeAllRanges();sel.addRange(rg);note.textContent='Выделено — нажмите Ctrl+C';};
   try{navigator.clipboard.writeText(lastCopy).then(()=>{note.textContent='Скопировано';},fallback);}catch(err){fallback();}
 });
-
-$('#smpDrugs').addEventListener('click',e=>{
-  const b=e.target.closest('.drug');if(!b)return;
-  smp.drug=b.dataset.id;
-  document.querySelectorAll('#smpDrugs .drug').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
-  render();
+Object.values(KITS).forEach(K=>{
+  E(K,'Drugs').addEventListener('click',e=>{
+    const b=e.target.closest('.drug');if(!b)return;
+    K.st.drug=b.dataset.id;
+    E(K,'Drugs').querySelectorAll('.drug').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
+    render();
+  });
+  E(K,'Result').addEventListener('click',e=>{
+    if(e.target.dataset&&e.target.dataset.link){
+      state.drug=e.target.dataset.link;
+      document.querySelectorAll('#drugs .drug').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.id===state.drug)));
+      setTab('main');return;
+    }
+    if(e.target.id!==K.key+'CopyBtn')return;
+    const note=E(K,'Copied');
+    const fallback=()=>{const ln=E(K,'Result').querySelector('.label-card');if(!ln)return;const sel=window.getSelection();const rg=document.createRange();rg.selectNodeContents(ln);sel.removeAllRanges();sel.addRange(rg);note.textContent='Выделено — нажмите Ctrl+C';};
+    try{navigator.clipboard.writeText(K.copy).then(()=>{note.textContent='Скопировано';},fallback);}catch(err){fallback();}
+  });
 });
 document.querySelector('.tabs').addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(b)setTab(b.dataset.tab);});
-$('#smpResult').addEventListener('click',e=>{
-  if(e.target.id==='smpLink'){
-    state.drug='paracetamol';
-    document.querySelectorAll('#drugs .drug').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.id==='paracetamol')));
-    setTab('main');return;
-  }
-  if(e.target.id!=='smpCopyBtn')return;
-  const note=$('#smpCopied');
-  const fallback=()=>{const ln=$('#smpResult .label-card');const sel=window.getSelection();const rg=document.createRange();rg.selectNodeContents(ln);sel.removeAllRanges();sel.addRange(rg);note.textContent='Выделено — нажмите Ctrl+C';};
-  try{navigator.clipboard.writeText(smpCopy).then(()=>{note.textContent='Скопировано';},fallback);}catch(err){fallback();}
-});
-window.addEventListener('hashchange',()=>{const t=location.hash==='#smp'?'smp':'main';if(t!==curTab)setTab(t);});
+window.addEventListener('hashchange',()=>{const t=location.hash.slice(1)||'main';if(t!==curTab)setTab(t);});
 
 renderDrugs();
-renderSmpDrugs();
-if(location.hash==='#smp')setTab('smp');else render();
+Object.values(KITS).forEach(renderKitDrugs);
+$('#mainCnt').textContent=DRUGS.length;
+{const t=location.hash.slice(1);if(TABS.includes(t)&&t!=='main')setTab(t);else render();}
 })();
 </script>
 
