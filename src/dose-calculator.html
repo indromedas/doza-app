@@ -192,6 +192,30 @@ details.trace ol{margin:10px 0 0;padding-left:22px;display:grid;gap:4px;font:13p
 .info-text{font-size:14.5px;line-height:1.55;margin:0}
 .linkbtn{font:600 14px var(--font-ui);border:1px solid var(--accent);background:var(--accent-soft);color:var(--accent);border-radius:8px;padding:9px 14px;cursor:pointer;justify-self:start}
 .chips.regs label{border-radius:8px}
+.top .wrap{flex-wrap:wrap}
+.gsearch{margin-left:auto;position:relative;flex:0 1 340px;min-width:0}
+.gsearch .inbox{background:var(--bg)}
+.gsearch input{font:15px var(--font-ui)!important;padding-left:6px!important}
+.gs-ico{width:18px;height:18px;margin-left:12px;fill:none;stroke:var(--muted);stroke-width:2;flex:none}
+.gs-k{font:600 11px var(--font-num);color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:1px 6px;margin-right:10px}
+@media (max-width:720px){.gsearch{flex:1 1 100%;margin-left:0}.gs-k{display:none}}
+.gres{position:absolute;right:0;top:calc(100% + 6px);width:min(440px,calc(100vw - 32px));max-height:min(60vh,460px);overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 12px 32px rgba(19,30,41,.18);z-index:60;padding:6px;display:grid;gap:2px}
+@media (max-width:720px){.gres{left:0;right:auto;width:100%}}
+.gr{font:inherit;text-align:left;background:transparent;border:0;border-radius:8px;padding:8px 10px;cursor:pointer;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:1px 10px;color:var(--ink)}
+.gr:hover,.gr.on{background:var(--accent-soft)}
+.gr-n{font-weight:600}
+.gr-s{grid-column:1;font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gr-t{grid-column:2;grid-row:1/3;align-self:center;font-size:11.5px;color:var(--accent);font-weight:600;white-space:nowrap}
+.gempty{margin:0;padding:10px;color:var(--muted);font-size:13.5px}
+.hist{margin-top:18px;border-top:1px dashed var(--line);padding-top:12px}
+.hist summary{cursor:pointer;font-weight:700;font-size:15px}
+.hist .cnt{font:600 11px var(--font-num);background:var(--sunk);color:var(--muted);border-radius:999px;padding:1px 7px;margin-left:6px}
+.hist-list{display:grid;gap:6px;margin:10px 0}
+.hist-item{font:inherit;text-align:left;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;padding:8px 10px;cursor:pointer;display:grid;gap:2px;min-width:0}
+.hist-item:hover{border-color:var(--accent)}
+.hi-t{font-weight:600;font-size:13.5px}
+.hi-x{font:12px var(--font-num);color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hi-m{font-size:11.5px;color:var(--muted)}
 .ceap-list{display:grid;gap:8px}
 .ceap-check{align-items:flex-start;line-height:1.4}
 .ceap-check b{font-family:var(--font-num);font-weight:600;color:var(--accent)}
@@ -225,6 +249,10 @@ footer b{color:var(--ink);font-weight:600}
       <h1>Калькулятор дозировок</h1>
       <p>Разовая и суточная доза по возрасту, полу, весу и росту пациента — по инструкциям из РЛС</p>
     </div>
+    <div class="gsearch" role="search">
+      <div class="inbox"><svg class="gs-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg><input id="gq" type="search" autocomplete="off" placeholder="Поиск: препарат, шкала, CEAP…" aria-label="Поиск по всему калькулятору" aria-controls="gres" aria-expanded="false"><kbd class="gs-k">/</kbd></div>
+      <div class="gres" id="gres" role="listbox" hidden></div>
+    </div>
   </div>
 </header>
 
@@ -234,6 +262,7 @@ footer b{color:var(--ink);font-weight:600}
   <nav class="tabs" role="tablist" aria-label="Разделы калькулятора">
     <button type="button" role="tab" id="tabMain" data-tab="main" aria-selected="true">Амбулаторные формы <span class="cnt" id="mainCnt">33</span></button>
     <button type="button" role="tab" id="tabCeap" data-tab="ceap" aria-selected="false">CEAP</button>
+    <button type="button" role="tab" id="tabSclero" data-tab="sclero" aria-selected="false">Склеротерапия</button>
     <button type="button" role="tab" id="tabSmp" data-tab="smp" aria-selected="false">СМП · укладка 1165н <span class="cnt" id="smpCnt">85</span></button>
     <button type="button" role="tab" id="tabAnest" data-tab="anest" aria-selected="false">Анестезиология <span class="cnt" id="anestCnt">12</span></button>
     <button type="button" role="tab" id="tabAbx" data-tab="abx" aria-selected="false">Антибиотики в/в <span class="cnt" id="abxCnt">9</span></button>
@@ -311,6 +340,11 @@ footer b{color:var(--ink);font-weight:600}
       </div>
 
       <div class="metrics" id="metrics" aria-live="polite"></div>
+      <details class="hist" id="histBox" open>
+        <summary>Последние расчёты <span class="cnt" id="histCnt">0</span></summary>
+        <div class="hist-list" id="histList"></div>
+        <button type="button" class="copy" id="histClear" hidden>Очистить историю</button>
+      </details>
     </aside>
 
     <section class="work">
@@ -356,6 +390,10 @@ footer b{color:var(--ink);font-weight:600}
       <div class="panel" id="ceapForm"></div>
       <div class="panel result" id="ceapResult" aria-live="polite"></div>
      </div>
+     <div class="work-pane" id="paneSclero" hidden>
+      <div class="panel" id="scForm"></div>
+      <div class="panel result" id="scResult" aria-live="polite"></div>
+     </div>
      <div class="work-pane" id="paneCard" hidden>
       <div class="panel result" id="cardResult" aria-live="polite"></div>
      </div>
@@ -388,6 +426,7 @@ footer b{color:var(--ink);font-weight:600}
     <p><b>Вкладка «Анестезиология».</b> Только для врача анестезиолога-реаниматолога при возможности ИВЛ и мониторинга. Дозы — РЛС и инструкции препаратов; рокуроний при ожирении считается по идеальной массе, сугаммадекс — по фактической.</p>
     <p><b>Экстренная карточка.</b> Размеры оборудования, энергия разряда и дозы для реанимации по массе — по рекомендациям ERC 2021 и Национального совета по реанимации; нормы и ориентир массы — APLS.</p>
     <p><b>Антибиотики в/в и шкалы.</b> Дозы антибиотиков — РЛС и инструкции производителей с коррекцией по клиренсу креатинина. Шкалы: Глазго, qSOFA (Sepsis-3), NEWS2 (Royal College of Physicians). Избранное хранится только на этом устройстве.</p>
+    <p><b>Склеротерапия.</b> Дозы и пределы — инструкции Этоксисклерола и Фибро-Вейна в РЛС; соотношение пены 1 + 4 (метод Тессари) — Европейские рекомендации по склеротерапии.</p>
     <p><b>CEAP.</b> Классификация хронических заболеваний вен, пересмотр 2020 года (Lurie F. et al., J Vasc Surg Venous Lymphat Disord, 2020).</p>
     <p><b>Формулы.</b> Площадь поверхности тела — Мостеллер; идеальная масса — Devine; клиренс креатинина — Кокрофт–Голт (с 18 лет, по идеальной или скорректированной массе); СКФ у детей 1–17 лет — формула Шварца у постели больного.</p>
     <p><b>Ограничения.</b> Калькулятор не проверяет аллергии, сопутствующие болезни и взаимодействия. При подозрении на передозировку звоните 103 или 112.</p>
@@ -397,10 +436,10 @@ footer b{color:var(--ink);font-weight:600}
         <p><b>Что это.</b> Справочный калькулятор доз для медицинских работников: амбулаторные препараты, укладки скорой помощи по приказу Минздрава России № 1165н, анестезиология, антибиотики, экстренная карточка и шкалы. Дозы взяты из инструкций в Регистре лекарственных средств России (РЛС), а где их там нет — из инструкций производителей и клинических рекомендаций; источник указан в карточке каждого препарата.</p>
         <p><b>Это не медицинское изделие.</b> Калькулятор не зарегистрирован как медицинское изделие и не заменяет назначение врача, инструкцию к конкретной упаковке и клиническое мышление. Решение о дозе и способе введения принимает врач, который видит пациента.</p>
         <p><b>Без гарантий.</b> Авторы стараются поддерживать данные точными, но не гарантируют отсутствие ошибок и не несут ответственности за последствия применения расчётов. Перед введением сверяйте дозу с инструкцией и концентрацией в вашей ампуле.</p>
-        <p><b>Ваши данные.</b> Возраст, пол, вес, рост и креатинин обрабатываются только на вашем устройстве и никуда не передаются. Список избранного хранится в памяти браузера на этом устройстве. Регистрации, аналитики и рекламы нет.</p>
+        <p><b>Ваши данные.</b> Возраст, пол, вес, рост и креатинин обрабатываются только на вашем устройстве и никуда не передаются. Избранное и последние 10 расчётов хранятся в памяти браузера на этом устройстве; историю можно очистить кнопкой под данными пациента. Регистрации, аналитики и рекламы нет.</p>
         <p><b>Нашли ошибку в дозе?</b> Сообщите — это важнее всего: <a href="https://github.com/indromedas/doza-app/issues" target="_blank" rel="noopener">github.com/indromedas/doza-app/issues</a>.</p>
         <p><b>Права.</b> © 2026 indromedas. Использование для личной профессиональной работы — свободно. Копирование, изменение и распространение, в том числе коммерческое, — только с разрешения автора.</p>
-        <p class="ver">Версия 6 · данные сверены в ноябре 2026 года</p>
+        <p class="ver">Версия 7 · данные сверены в ноябре 2026 года</p>
       </div>
     </details>
   </footer>
@@ -1643,7 +1682,8 @@ let curTab='main';
 function render(){
   const p=readPatient();
   renderMetrics(p);
-  if(KITS[curTab])renderKit(KITS[curTab],p);else if(curTab==='card')renderCard(p);else if(curTab==='scales')renderScales(p);else if(curTab==='ceap')renderCeap();else renderMain(p);
+  if(KITS[curTab])renderKit(KITS[curTab],p);else if(curTab==='card')renderCard(p);else if(curTab==='scales')renderScales(p);else if(curTab==='ceap')renderCeap();else if(curTab==='sclero')renderSclero(p);else renderMain(p);
+  lastP=p;scheduleHist();
 }
 function renderMain(p){
   const d=cur();
@@ -2879,10 +2919,260 @@ document.addEventListener('click',e=>{
   try{navigator.clipboard.writeText(ceapCopy).then(()=>{note.textContent='Скопировано';},fallback);}catch(err){fallback();}
 });
 
-const TABS=['main','smp','anest','abx','card','scales','ceap'];
+/* ================= Склеротерапия ================= */
+const SCL={
+  pol:{name:'Этоксисклерол',inn:'полидоканол (лауромакрогол-400)',
+    src:[['Этоксисклерол — инструкция',DR('etoksisklerol-3579')],['Полидоканол — описание вещества',AS('polidokanol-3403')]],
+    conc:[0.25,0.5,1,2,3],
+    ind:[
+      {id:'tel',label:'Телеангиэктазии',tech:'liq',rec:[0.25,0.5],def:0.5,inj:[0.1,0.2],n:5},
+      {id:'telc',label:'Центральная (питающая) вена телеангиэктазии',tech:'liq',rec:[0.25,0.5,1],def:0.5,inj:[0.1,0.2],n:5},
+      {id:'ret',label:'Ретикулярные и мелкие варикозные вены',tech:'liq',rec:[1],def:1,inj:[0.1,0.3],n:5},
+      {id:'med',label:'Средние варикозные вены (жидкая форма)',tech:'liq',rec:[3],def:3,inj:[0.5,1],next:2,n:1},
+      {id:'large',label:'Крупные варикозные вены (жидкая форма)',tech:'liq',rec:[3],def:3,inj:[1,1],next:2,n:1},
+      {id:'trib',label:'Притоки — пенная склеротерапия',tech:'foam',rec:[1],def:1,inj:[0,4],max:6,n:1},
+      {id:'perf',label:'Перфорантные вены — пенная склеротерапия',tech:'foam',rec:[1],def:1,inj:[0,2],max:4,n:1},
+      {id:'gsv',label:'Большая и малая подкожные вены — пенная',tech:'foam',rec:[3],def:3,inj:[0,4],max:6,maxNote:'6 мл — только для большой подкожной вены',n:1}
+    ]},
+  sts:{name:'Фибро-Вейн',inn:'натрия тетрадецилсульфат',
+    src:[['Фибро-Вейн — инструкция',DR('fibro-vein-7116')]],
+    conc:[0.2,0.5,1,3],
+    ind:[
+      {id:'tel',label:'Телеангиэктазии и внутрикожные вены',tech:'liq',rec:[0.2,0.5],def:0.2,injTxt:'0,1–1,0 мл на каждые 3–5 см вены',vol:0.3,n:4},
+      {id:'small',label:'Поверхностные варикозные вены до 1 см',tech:'liq',rec:[0.5,1],def:1,injTxt:'0,25–1,0 мл на каждые 5 см вены',vol:0.5,n:4},
+      {id:'large',label:'Варикозные вены диаметром 1 см и более',tech:'liq',rec:[3],def:3,injTxt:'0,5–1,0 мл на каждые 10 см вены, не более 1 мл в точку',vol:1,n:4}
+    ]}
+};
+const sc={drug:'pol',ind:'ret',conc:1,vol:0.3,n:5,ratio:4,built:null};
+let scCopy='';
+const scD=()=>SCL[sc.drug];
+const scI=()=>scD().ind.find(x=>x.id===sc.ind)||scD().ind[0];
+const pc=c=>nf(c,2)+'%';
+function scDefaults(){const I=scI();sc.conc=I.def;sc.vol=I.tech==='foam'?Math.min(I.inj[1],4):(I.vol!=null?I.vol:I.inj[1]);sc.n=I.n;}
+function buildSclero(){
+  const D=scD(),I=scI(),cid=c=>'scC_'+String(c).replace('.','_');
+  $('#scForm').innerHTML=`<div class="ph"><h2>Склеротерапия</h2><span>доза склерозанта по массе тела и инструкции</span></div>
+  <div class="fields">
+    <div class="field"><span class="lbl" id="scDrugLbl">Препарат</span><div class="seg" role="radiogroup" aria-labelledby="scDrugLbl">${Object.entries(SCL).map(([k,v])=>`<input type="radio" name="scDrug" id="scDrug_${k}" value="${k}"${k===sc.drug?' checked':''}><label for="scDrug_${k}">${v.name}</label>`).join('')}</div><span class="hint">${D.inn}</span></div>
+    <div class="field"><label class="lbl" for="scInd">Что склерозируем</label><div class="inbox"><select id="scInd">${D.ind.map(x=>`<option value="${x.id}"${x.id===I.id?' selected':''}>${x.label}</option>`).join('')}</select></div></div>
+    <div class="field"><span class="lbl" id="scConcLbl">Концентрация</span><div class="chips" role="radiogroup" aria-labelledby="scConcLbl">${D.conc.map(c=>`<input type="radio" name="scConc" id="${cid(c)}" value="${c}"${c===sc.conc?' checked':''}><label for="${cid(c)}">${pc(c)}${I.rec.includes(c)?' ★':''}</label>`).join('')}</div><span class="hint">★ — рекомендовано инструкцией для выбранных вен</span></div>
+    ${I.tech==='foam'?`<div class="field"><label class="lbl" for="scRatio">Пена: раствор + воздух</label><div class="inbox"><select id="scRatio"><option value="4"${sc.ratio===4?' selected':''}>1 + 4 (метод Тессари)</option><option value="3"${sc.ratio===3?' selected':''}>1 + 3</option></select></div></div>`:''}
+    <div class="two">
+      <div class="field"><label class="lbl" for="scVol">${I.tech==='foam'?'Пены':'Раствора'} на инъекцию</label><div class="inbox"><input id="scVol" inputmode="decimal" autocomplete="off" value="${nf(sc.vol,2)}"><span class="u">мл</span></div></div>
+      <div class="field"><label class="lbl" for="scN">Число инъекций</label><div class="inbox"><input id="scN" inputmode="numeric" autocomplete="off" value="${sc.n}"><span class="u">за сеанс</span></div></div>
+    </div>
+  </div>`;
+  sc.built=sc.drug+'|'+I.id;
+}
+function renderSclero(p){
+  const D=scD(),I=scI();
+  if(sc.built!==sc.drug+'|'+I.id)buildSclero();
+  const v=parseFloat(String($('#scVol').value).replace(',','.')),n=parseInt($('#scN').value,10);
+  sc.vol=isFinite(v)&&v>0?v:0;sc.n=isFinite(n)&&n>0?n:0;
+  const foam=I.tech==='foam',ratio=foam?sc.ratio:0,mgml=sc.conc*10;
+  const liqInj=foam?sc.vol/(1+ratio):sc.vol,liq=liqInj*sc.n,foamTot=foam?sc.vol*sc.n:0,mg=liq*mgml;
+  const msgs=[],A=(l,t)=>msgs.push({lvl:l,t});
+  const el=$('#scResult');
+  const who=p.ok?`${ageText(p)} · ${p.sex==='m'?'муж.':'жен.'} · ${nf(p.w,1)} кг`:'';
+  const head=st=>`<div class="res-head"><div><div class="eyebrow">Флебология</div><h2>${D.name} ${pc(sc.conc)}${foam?' — пена':''}</h2><div class="brands">${I.label}</div>${who?`<div class="who">${who}</div>`:''}</div><div class="pills">${st?`<span class="pill ${st[0]}">${st[1]}</span>`:''}<span class="pill plain">${foam?'пенная':'жидкая форма'}</span></div></div>`;
+  let maxFig,injFig,tableRows='',pctMax=0;
+  if(sc.drug==='pol'){
+    if(!p.ok){el.innerHTML=head(null)+`<div class="res-body"><ul class="msgs">${msgHTML({lvl:'warn',t:'Укажите возраст и вес пациента: максимальная доза полидоканола считается по массе тела — 2 мг/кг в сутки.'})}</ul></div>`;scCopy='';return;}
+    const maxMg=2*p.w,maxLiq=maxMg/mgml;pctMax=Math.max(mg/maxMg,foam?foamTot/10:0);
+    maxFig=`<div class="fig main"><span class="lab">Максимум за сутки</span><span class="val">${fN(maxMg)} <small>мг</small></span><span class="sub">= ${fN(maxLiq)} мл ${pc(sc.conc)} · 2 мг/кг${foam?' · пены не более 10 мл':''}</span></div>`;
+    if(foam)injFig=`<div class="fig"><span class="lab">На одну инъекцию</span><span class="val">до ${nf(I.inj[1])} <small>мл пены</small></span><span class="sub ui">максимум ${nf(I.max)} мл${I.maxNote?' — '+I.maxNote.toLowerCase():''}</span></div>`;
+    else if(I.next)injFig=`<div class="fig"><span class="lab">На одну инъекцию</span><span class="val">${rng(I.inj[0],I.inj[1])} <small>мл</small></span><span class="sub ui">первая инъекция; далее — до ${nf(I.next)} мл каждая</span></div>`;
+    else injFig=`<div class="fig"><span class="lab">На одну инъекцию</span><span class="val">${rng(I.inj[0],I.inj[1])} <small>мл</small></span><span class="sub ui">в зависимости от диаметра вены</span></div>`;
+    if(mg>maxMg+1e-9)A('stop',`Превышена суточная доза: ${fN(mg)} мг больше 2 мг/кг (${fN(maxMg)} мг).`);
+    if(foam){
+      if(foamTot>10+1e-9)A('stop',`Пены за сеанс ${fN(foamTot)} мл — больше 10 мл, допустимых инструкцией независимо от массы тела.`);
+      if(sc.vol>I.max+1e-9)A('stop',`${fN(sc.vol)} мл пены в одну инъекцию — больше максимума ${nf(I.max)} мл.`);
+      else if(sc.vol>I.inj[1]+1e-9)A('warn',`Обычно вводят до ${nf(I.inj[1])} мл пены однократно; ${nf(I.max)} мл — максимум${I.maxNote?' ('+I.maxNote.toLowerCase()+')':''}.`);
+      A('warn','Пенная склеротерапия противопоказана при симптомном открытом овальном окне.');
+    }else if(I.next){
+      if(sc.vol>I.next+1e-9)A('stop',`${fN(sc.vol)} мл в одну инъекцию — больше ${nf(I.next)} мл.`);
+      else if(sc.vol>I.inj[1]+1e-9)A('info',`Первая инъекция — не более ${rng(I.inj[0],I.inj[1])} мл; последующие — до ${nf(I.next)} мл каждая.`);
+    }else if(sc.vol>I.inj[1]+1e-9)A('warn',`Для этих вен инструкция рекомендует ${rng(I.inj[0],I.inj[1])} мл на инъекцию.`);
+    if(p.preg){const P={t1:['stop','I триместр беременности — противопоказан.'],t2:['warn','Беременность — только по строгим показаниям.'],t3:['warn','После 36 недель беременности — противопоказан.'],lact:['stop','Грудное вскармливание — противопоказан.']}[p.preg];if(P)A(P[0],P[1]);}
+    A('info','Противопоказана при тромбозе и тромбоэмболии, высоком риске тромбоза (тромбофилия, гормональная контрацепция или ЗГТ вместе с ожирением, курением), иммобилизации, облитерирующих заболеваниях артерий III–IV стадии по Фонтейну.');
+    A('info','При выраженном варикозе — в несколько этапов; на первом этапе, особенно при склонности к аллергии, — одна инъекция.');
+    tableRows=D.conc.map(c=>`<div class="row${c===sc.conc?' total':''}"><span class="k">${pc(c)}</span><span class="v">${fN(maxMg/(c*10))} мл</span><span class="s">${c===sc.conc?'выбранная концентрация':'раствора'}${I.rec.includes(c)?' · рекомендовано':''}</span></div>`).join('');
+  }else{
+    const sess=sc.conc===3?4:10;pctMax=liq/sess;
+    maxFig=`<div class="fig main"><span class="lab">Максимум за сеанс</span><span class="val">${sess} <small>мл</small></span><span class="sub">${pc(sc.conc)} = ${fN(sess*mgml)} мг${sc.conc===3?' · 1 мл × 4 точки':''}</span></div>`;
+    injFig=`<div class="fig"><span class="lab">Объём</span><span class="val txt">${I.injTxt}</span><span class="sub ui">2–6 точек за сеанс по 0,3–0,5 мл</span></div>`;
+    if(liq>sess+1e-9)A('stop',`${fN(liq)} мл за сеанс — больше ${sess} мл, допустимых для раствора ${pc(sc.conc)}.`);
+    if(sc.conc===3&&sc.vol>1+1e-9)A('stop','Раствор 3% — не более 1 мл в одну точку.');
+    if(p.liver)A('stop','Тяжёлые заболевания печени — противопоказание.');
+    if(p.crcl!=null&&p.crcl<30)A('stop','Тяжёлые заболевания почек — противопоказание.');
+    A('warn','Перед курсом — пробное введение для выявления непереносимости.');
+    A('info','После инъекции — сразу компрессия (6 недель) и ходьба не менее 1 часа. Сеансы повторяют 2–10 раз с интервалом 3–5 дней.');
+    if(p.preg)A('warn','Беременность и грудное вскармливание — по инструкции препарата и решению специалиста.');
+  }
+  if(!I.rec.includes(sc.conc))A('warn',`Для вен «${I.label.toLowerCase()}» инструкция рекомендует ${I.rec.map(pc).join(' или ')}.`);
+  if(p.ok&&p.ageY<18)A('warn','У детей и подростков безопасность не установлена — только по решению специалиста.');
+  if(!sc.vol||!sc.n)A('warn','Укажите объём на инъекцию и число инъекций.');
+  A('info','Вводить строго внутривенно, конечность горизонтально или приподнята на 30–45°. Попадание в артерию грозит некрозом — срочно к сосудистому хирургу.');
+  const stopped=msgs.some(m=>m.lvl==='stop');
+  const order={stop:0,warn:1,info:2};msgs.sort((a,b)=>order[a.lvl]-order[b.lvl]);
+  const st=stopped?['stop','Превышен предел']:msgs.some(m=>m.lvl==='warn')?['warn','Есть ограничения']:['ok','В пределах инструкции'];
+  const planFig=`<div class="fig"><span class="lab">Запланировано</span><span class="val">${fN(foam?foamTot:liq)} <small>мл${foam?' пены':''}</small></span><span class="sub">${foam?`${fN(liq)} мл раствора · `:''}${fN(mg)} мг · ${Math.round(pctMax*100)}% от максимума</span></div>`;
+  const prep=foam&&liq?`<div class="rows"><div class="row total"><span class="k">Приготовить пену</span><span class="v">${fN(liq)} + ${fN(liq*ratio)} мл</span><span class="s">раствор ${pc(sc.conc)} + воздух (1 + ${ratio}) = ${fN(liq*(1+ratio))} мл пены; на одну инъекцию — ${fN(liqInj)} мл раствора</span></div></div>`:'';
+  scCopy=`${D.name} ${pc(sc.conc)}${foam?` пена 1+${ratio}`:''}, ${I.label.toLowerCase()}: ${sc.n} × ${fN(sc.vol)} мл${foam?' пены':''} = ${fN(foam?foamTot:liq)} мл (${fN(mg)} мг).${sc.drug==='pol'&&p.ok?` Максимум за сутки — ${fN(2*p.w)} мг (2 мг/кг).`:''}`;
+  el.innerHTML=head(st)+`<div class="res-body"><div class="figs">${maxFig}${injFig}${planFig}</div>${prep}
+    <div class="label-card"><div class="ln"><span class="k">S.:</span><span>${scCopy}</span></div><div class="foot"><span class="copied" id="scCopied" aria-live="polite"></span>${tgShare(scCopy)}<button type="button" class="copy" id="scCopyBtn">Скопировать</button></div></div>
+    <ul class="msgs">${msgs.map(msgHTML).join('')}</ul>
+    ${tableRows?`<h3 class="card-h">Суточный максимум при массе ${nf(p.w,1)} кг</h3><div class="rows">${tableRows}</div>`:''}
+    <div class="src"><div><span class="lbl">Источник</span>${D.src.map(s=>`<a href="${s[1]}" target="_blank" rel="noopener">${s[0]}</a>`).join(' · ')} — РЛС</div><p>${foam?'Соотношение 1 + 4 (метод Тессари) — Европейские рекомендации по склеротерапии; концентрации и объёмы — инструкция препарата.':'Концентрации, объёмы и пределы — инструкция препарата.'}</p></div></div>`;
+  if(stopped)scCopy='';
+}
+document.addEventListener('change',e=>{
+  const t=e.target;if(!t.closest||!t.closest('#scForm'))return;
+  if(t.name==='scDrug'){sc.drug=t.value;sc.ind=SCL[sc.drug].ind[0].id;scDefaults();if(sc.drug==='pol'){sc.ind='ret';scDefaults();}sc.built=null;}
+  else if(t.id==='scInd'){sc.ind=t.value;scDefaults();sc.built=null;}
+  else if(t.name==='scConc')sc.conc=parseFloat(t.value);
+  else if(t.id==='scRatio')sc.ratio=parseInt(t.value,10);
+  render();
+});
+document.addEventListener('click',e=>{
+  if(e.target.id!=='scCopyBtn')return;
+  const note=$('#scCopied');
+  const fallback=()=>{const ln=$('#scResult .label-card');if(!ln)return;const sel=window.getSelection();const rg=document.createRange();rg.selectNodeContents(ln);sel.removeAllRanges();sel.addRange(rg);note.textContent='Выделено — нажмите Ctrl+C';};
+  try{navigator.clipboard.writeText(scCopy).then(()=>{note.textContent='Скопировано';},fallback);}catch(err){fallback();}
+});
+
+/* ================= История расчётов (на устройстве) ================= */
+const HIST_KEY='doza-hist';
+let HIST=[];try{HIST=JSON.parse(localStorage.getItem(HIST_KEY)||'[]')||[];}catch(e){HIST=[];}
+let histTimer=null,userTouched=false,lastP=null;
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function patSnap(){return{y:$('#ageY').value,m:$('#ageMo').value,sex:$('#sexF').checked?'f':'m',w:$('#weight').value,h:$('#height').value,cr:$('#creat').value,cu:$('#creatUnit').value,preg:$('#preg').value,liver:$('#liver').checked};}
+function histCurrent(){
+  if(!lastP||!lastP.ok)return null;
+  const t=curTab;let e=null;
+  if(t==='main'){
+    if(!lastCopy)return null;
+    const d=cur(),fid=state.form[d.id]||defaultForm(d,lastP),mode=d.modes?(state.mode[d.id]||d.modes[0].id):null;
+    const ml=d.modes?(d.modes.find(x=>x.id===mode)||{}).label:'';
+    e={tab:t,id:d.id,form:fid,mode,title:d.name+(ml?' · '+ml:''),text:lastCopy.split('\n').pop().replace(/^S\.:\s*/,'')};
+  }else if(KITS[t]){
+    const K=KITS[t];if(!K.copy)return null;
+    const d=K.list.find(x=>x.id===K.st.drug);if(!d)return null;
+    const fid=K.st.form[d.id]||d.forms[0].id,regs=(d.regs||[]).filter(g=>!g.f||g.f.includes(fid)),reg=regs.find(g=>g.id===K.st.reg[d.id])||regs[0];
+    e={tab:t,id:d.id,form:fid,reg:reg?reg.id:null,variant:t==='smp'?K.variant:null,title:d.name+(reg?' · '+reg.label:''),text:K.copy};
+  }else if(t==='sclero'){
+    if(!scCopy)return null;
+    e={tab:t,sc:{drug:sc.drug,ind:sc.ind,conc:sc.conc,vol:sc.vol,n:sc.n,ratio:sc.ratio},title:'Склеротерапия · '+SCL[sc.drug].name,text:scCopy};
+  }
+  if(!e)return null;
+  e.p=patSnap();e.pt=`${ageText(lastP)} · ${nf(lastP.w,1)} кг`;e.ts=Date.now();
+  e.key=[e.tab,e.id||'',e.form||'',e.mode||'',e.reg||'',e.variant||'',JSON.stringify(e.sc||''),JSON.stringify(e.p)].join('|');
+  return e;
+}
+function saveHist(){const e=histCurrent();if(!e)return;HIST=HIST.filter(x=>x.key!==e.key);HIST.unshift(e);HIST=HIST.slice(0,10);try{localStorage.setItem(HIST_KEY,JSON.stringify(HIST));}catch(err){}renderHist();}
+function scheduleHist(){if(!userTouched)return;clearTimeout(histTimer);histTimer=setTimeout(saveHist,2500);}
+const TAB_NAMES={main:'Амбулаторные',smp:'СМП',anest:'Анестезиология',abx:'Антибиотики',sclero:'Склеротерапия'};
+function renderHist(){
+  const box=$('#histList');if(!box)return;
+  $('#histCnt').textContent=HIST.length;$('#histClear').hidden=!HIST.length;
+  if(!HIST.length){box.innerHTML='<p class="hint">Здесь появятся последние 10 расчётов. Нажмите на запись, чтобы вернуться к ней с теми же данными пациента.</p>';return;}
+  const today=new Date().toDateString();
+  box.innerHTML=HIST.map((e,i)=>{const d=new Date(e.ts),tm=`${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`,day=d.toDateString()===today?'':` · ${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}`;
+    return `<button type="button" class="hist-item" data-hist="${i}"><span class="hi-t">${esc(e.title)}</span><span class="hi-x">${esc(e.text)}</span><span class="hi-m">${TAB_NAMES[e.tab]||''} · ${esc(e.pt)} · ${tm}${day}</span></button>`;}).join('');
+}
+function restoreHist(e){
+  const P=e.p;
+  $('#ageY').value=P.y;$('#ageMo').value=P.m;$(P.sex==='f'?'#sexF':'#sexM').checked=true;$('#weight').value=P.w;$('#height').value=P.h;
+  $('#creat').value=P.cr||'';$('#creatUnit').value=P.cu||'umol';$('#preg').value=P.preg||'';$('#liver').checked=!!P.liver;
+  if(e.tab==='main'){state.drug=e.id;state.form[e.id]=e.form;if(e.mode)state.mode[e.id]=e.mode;renderDrugs();filterDrugs();}
+  else if(KITS[e.tab]){
+    const K=KITS[e.tab];
+    if(e.tab==='smp'){const v=e.variant||'gen';$(v==='rean'?'#smpVarRean':'#smpVarGen').checked=true;if(K.variant!==v)setSmpVariant(v);}
+    K.st.drug=e.id;K.st.form[e.id]=e.form;if(e.reg)K.st.reg[e.id]=e.reg;K.st.built=null;renderKitDrugs(K);filterKit(K);
+  }else if(e.tab==='sclero'){Object.assign(sc,e.sc);sc.built=null;}
+  setTab(e.tab);
+  const res=document.getElementById({main:'result',smp:'smpResult',anest:'anestResult',abx:'abxResult',sclero:'scResult'}[e.tab]);
+  if(res&&res.scrollIntoView){try{res.scrollIntoView({block:'start',behavior:window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});}catch(err){}}
+}
+['input','change','click'].forEach(t=>document.addEventListener(t,e=>{if(e.target.closest&&e.target.closest('.layout')&&!e.target.closest('#histBox'))userTouched=true;},true));
+document.addEventListener('click',e=>{
+  const h=e.target.closest&&e.target.closest('[data-hist]');
+  if(h){const en=HIST[+h.dataset.hist];if(en)restoreHist(en);return;}
+  if(e.target.id==='histClear'){HIST=[];try{localStorage.removeItem(HIST_KEY);}catch(err){}renderHist();}
+});
+
+/* ================= Поиск по всему калькулятору ================= */
+const TAB_LABEL={main:'Амбулаторные',ceap:'CEAP',sclero:'Склеротерапия',smp:'СМП',anest:'Анестезиология',abx:'Антибиотики в/в',card:'Экстренная карточка',scales:'Шкалы'};
+let GIDX=null,gActive=0,gHits=[];
+const norm=s=>String(s||'').toLowerCase().replace(/ё/g,'е');
+function buildGIndex(){
+  const idx=[],add=o=>{o.kw=[o.kw,o.name,o.sub].map(norm).join(' ');idx.push(o);};
+  DRUGS.forEach(d=>add({tab:'main',id:d.id,name:d.name,sub:d.brands||d.cls,kw:d.cls}));
+  SMP.forEach(d=>add({tab:'smp',id:d.id,variant:'gen',name:d.name,sub:d.brands||d.forms[0].label}));
+  REANIM.forEach(d=>add({tab:'smp',id:d.id,variant:'rean',name:d.name,sub:(d.brands?d.brands+' · ':'')+'реанимационная укладка',kw:'реанимационная'}));
+  ANEST.forEach(d=>add({tab:'anest',id:d.id,name:d.name,sub:d.brands||d.forms[0].label}));
+  ABX.forEach(d=>add({tab:'abx',id:d.id,name:d.name,sub:d.brands||d.forms[0].label,kw:'антибиотик'}));
+  Object.entries(SCL).forEach(([k,v])=>add({tab:'sclero',drug:k,name:v.name,sub:v.inn,kw:'склеротерапия склерозант флебология вены'}));
+  add({tab:'ceap',name:'CEAP',sub:'классификация хронических заболеваний вен',kw:'сеап цеап классификация вены варикоз хзв хвн флебология'});
+  add({tab:'card',name:'Экстренная карточка',sub:'СЛР, интубационная трубка, разряд по массе',kw:'слр реанимация интубация трубка клинок ларингеальная маска дефибрилляция кардиоверсия нормы чсс ад'});
+  add({tab:'scales',name:'Шкала комы Глазго',sub:'оценка уровня сознания',kw:'глазго gcs кома сознание шкала'});
+  add({tab:'scales',name:'qSOFA',sub:'скрининг сепсиса',kw:'сепсис qsofa шкала'});
+  add({tab:'scales',name:'NEWS2',sub:'раннее выявление ухудшения состояния',kw:'news ухудшение шкала'});
+  return idx;
+}
+function gSearch(q){
+  q=norm(q).trim();if(!q)return[];
+  if(!GIDX)GIDX=buildGIndex();
+  const words=q.split(/\s+/),hits=[];
+  GIDX.forEach(o=>{if(!words.every(w=>o.kw.includes(w)))return;const n=norm(o.name);hits.push([n.startsWith(q)?0:n.includes(q)?1:2,o]);});
+  hits.sort((a,b)=>a[0]-b[0]||a[1].name.localeCompare(b[1].name,'ru'));
+  return hits.slice(0,14).map(x=>x[1]);
+}
+function closeGSearch(){const b=$('#gres');if(b)b.hidden=true;const q=$('#gq');if(q)q.setAttribute('aria-expanded','false');}
+function renderGSearch(){
+  const q=$('#gq').value,box=$('#gres');
+  if(!q.trim()){closeGSearch();return;}
+  gHits=gSearch(q);gActive=0;
+  box.innerHTML=gHits.length?gHits.map((o,i)=>`<button type="button" class="gr${i===0?' on':''}" role="option" data-gi="${i}"><span class="gr-n">${esc(o.name)}</span><span class="gr-s">${esc(o.sub||'')}</span><span class="gr-t">${TAB_LABEL[o.tab]}</span></button>`).join(''):'<p class="gempty">Ничего не найдено. Попробуйте торговое название или действующее вещество.</p>';
+  box.hidden=false;$('#gq').setAttribute('aria-expanded','true');
+}
+function gGo(o){
+  if(!o)return;
+  ['drugQ','smpQ','anestQ','abxQ'].forEach(id=>{const el=$('#'+id);if(el)el.value='';});
+  if(o.tab==='main'){state.drug=o.id;renderDrugs();}
+  else if(KITS[o.tab]){
+    const K=KITS[o.tab];
+    if(o.tab==='smp'){const v=o.variant||'gen';$(v==='rean'?'#smpVarRean':'#smpVarGen').checked=true;if(K.variant!==v)setSmpVariant(v);}
+    K.st.drug=o.id;K.st.built=null;renderKitDrugs(K);
+  }else if(o.tab==='sclero'&&sc.drug!==o.drug){sc.drug=o.drug;sc.ind=o.drug==='pol'?'ret':SCL[o.drug].ind[0].id;scDefaults();sc.built=null;}
+  filterDrugs();Object.values(KITS).forEach(K=>{if(E(K,'Q'))filterKit(K);});
+  $('#gq').value='';closeGSearch();$('#gq').blur();
+  setTab(o.tab);
+  const t=document.getElementById({main:'result',smp:'smpResult',anest:'anestResult',abx:'abxResult',sclero:'scResult',ceap:'ceapForm',card:'cardResult',scales:'scalesForm'}[o.tab]);
+  if(t&&t.scrollIntoView){try{t.scrollIntoView({block:'start',behavior:window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});}catch(e){}}
+}
+document.addEventListener('input',e=>{if(e.target.id==='gq')renderGSearch();});
+document.addEventListener('keydown',e=>{
+  if(e.target.id==='gq'){
+    const items=[...document.querySelectorAll('#gres .gr')];
+    if(e.key==='ArrowDown'||e.key==='ArrowUp'){if(!items.length)return;e.preventDefault();gActive=(gActive+(e.key==='ArrowDown'?1:-1)+items.length)%items.length;items.forEach((x,i)=>x.classList.toggle('on',i===gActive));if(items[gActive].scrollIntoView)items[gActive].scrollIntoView({block:'nearest'});}
+    else if(e.key==='Enter'){e.preventDefault();gGo(gHits[gActive]);}
+    else if(e.key==='Escape'){$('#gq').value='';closeGSearch();}
+    return;
+  }
+  const ae=document.activeElement;
+  if(e.key==='/'&&!(ae&&/^(INPUT|SELECT|TEXTAREA)$/.test(ae.tagName))){e.preventDefault();$('#gq').focus();}
+});
+document.addEventListener('click',e=>{
+  const g=e.target.closest&&e.target.closest('[data-gi]');
+  if(g){gGo(gHits[+g.dataset.gi]);return;}
+  if(!(e.target.closest&&e.target.closest('.gsearch')))closeGSearch();
+});
+
+const TABS=['main','smp','anest','abx','card','scales','ceap','sclero'];
 function setTab(t){
   curTab=TABS.includes(t)?t:'main';
-  $('#paneMain').hidden=curTab!=='main';$('#paneSmp').hidden=curTab!=='smp';$('#paneAnest').hidden=curTab!=='anest';$('#paneCard').hidden=curTab!=='card';$('#paneAbx').hidden=curTab!=='abx';$('#paneScales').hidden=curTab!=='scales';$('#paneCeap').hidden=curTab!=='ceap';
+  $('#paneMain').hidden=curTab!=='main';$('#paneSmp').hidden=curTab!=='smp';$('#paneAnest').hidden=curTab!=='anest';$('#paneCard').hidden=curTab!=='card';$('#paneAbx').hidden=curTab!=='abx';$('#paneScales').hidden=curTab!=='scales';$('#paneCeap').hidden=curTab!=='ceap';$('#paneSclero').hidden=curTab!=='sclero';
   document.querySelectorAll('.tabs [data-tab]').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.tab===curTab)));
   const want=curTab==='main'?'':'#'+curTab;
   if(location.hash!==want){try{history.replaceState(null,'',want||location.pathname+location.search);}catch(e){}}
@@ -2952,6 +3242,7 @@ window.addEventListener('hashchange',()=>{const t=location.hash.slice(1)||'main'
 
 renderDrugs();
 Object.values(KITS).forEach(renderKitDrugs);
+renderHist();
 $('#mainCnt').textContent=DRUGS.length;
 {const t=location.hash.slice(1);if(TABS.includes(t)&&t!=='main')setTab(t);else render();}
 })();
