@@ -215,6 +215,18 @@ details.trace ol{margin:10px 0 0;padding-left:22px;display:grid;gap:4px;font:13p
 .info-text{font-size:14.5px;line-height:1.55;margin:0}
 .linkbtn{font:600 14px var(--font-ui);border:1px solid var(--accent);background:var(--accent-soft);color:var(--accent);border-radius:8px;padding:9px 14px;cursor:pointer;justify-self:start}
 .chips.regs label{border-radius:8px}
+.ceap-list{display:grid;gap:8px}
+.ceap-check{align-items:flex-start;line-height:1.4}
+.ceap-check b{font-family:var(--font-num);font-weight:600;color:var(--accent)}
+.ceap-grp{display:grid;gap:6px;margin-top:4px}
+.ceap-grp .gname{margin-bottom:2px}
+.ceap-seg{display:grid;grid-template-columns:4.6em minmax(0,1fr) minmax(0,13em);gap:10px;align-items:center}
+.ceap-seg code{font:600 13px var(--font-num);color:var(--accent)}
+.ceap-seg label{font-size:14px}
+.ceap-seg .inbox select{font:14px var(--font-ui);padding:7px 8px}
+@media (max-width:560px){.ceap-seg{grid-template-columns:4.2em minmax(0,1fr)}.ceap-seg .inbox{grid-column:1/-1}}
+.fig .val.ceap-val{font-size:21px;line-height:1.3}
+.fig.main .val.ceap-val{font-size:24px}
 .fav{font:600 12.5px var(--font-ui);border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:999px;padding:4px 10px;cursor:pointer;white-space:nowrap}
 .fav[aria-pressed="true"]{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 45%,transparent);background:var(--warn-soft)}
 a.copy{text-decoration:none;display:inline-flex;align-items:center}
@@ -250,6 +262,7 @@ footer b{color:var(--ink);font-weight:600}
     <button type="button" role="tab" id="tabAbx" data-tab="abx" aria-selected="false">Антибиотики в/в <span class="cnt" id="abxCnt">9</span></button>
     <button type="button" role="tab" id="tabCard" data-tab="card" aria-selected="false">Экстренная карточка</button>
     <button type="button" role="tab" id="tabScales" data-tab="scales" aria-selected="false">Шкалы</button>
+    <button type="button" role="tab" id="tabCeap" data-tab="ceap" aria-selected="false">CEAP</button>
   </nav>
 
   <main class="layout">
@@ -364,6 +377,10 @@ footer b{color:var(--ink);font-weight:600}
       <div class="panel result" id="abxResult" aria-live="polite"></div>
      </div>
      <div class="work-pane" id="paneScales" hidden><div class="work-pane" id="scalesForm"></div></div>
+     <div class="work-pane" id="paneCeap" hidden>
+      <div class="panel" id="ceapForm"></div>
+      <div class="panel result" id="ceapResult" aria-live="polite"></div>
+     </div>
      <div class="work-pane" id="paneCard" hidden>
       <div class="panel result" id="cardResult" aria-live="polite"></div>
      </div>
@@ -396,6 +413,7 @@ footer b{color:var(--ink);font-weight:600}
     <p><b>Вкладка «Анестезиология».</b> Только для врача анестезиолога-реаниматолога при возможности ИВЛ и мониторинга. Дозы — РЛС и инструкции препаратов; рокуроний при ожирении считается по идеальной массе, сугаммадекс — по фактической.</p>
     <p><b>Экстренная карточка.</b> Размеры оборудования, энергия разряда и дозы для реанимации по массе — по рекомендациям ERC 2021 и Национального совета по реанимации; нормы и ориентир массы — APLS.</p>
     <p><b>Антибиотики в/в и шкалы.</b> Дозы антибиотиков — РЛС и инструкции производителей с коррекцией по клиренсу креатинина. Шкалы: Глазго, qSOFA (Sepsis-3), NEWS2 (Royal College of Physicians). Избранное хранится только на этом устройстве.</p>
+    <p><b>CEAP.</b> Классификация хронических заболеваний вен, пересмотр 2020 года (Lurie F. et al., J Vasc Surg Venous Lymphat Disord, 2020).</p>
     <p><b>Формулы.</b> Площадь поверхности тела — Мостеллер; идеальная масса — Devine; клиренс креатинина — Кокрофт–Голт (с 18 лет, по идеальной или скорректированной массе); СКФ у детей 1–17 лет — формула Шварца у постели больного.</p>
     <p><b>Ограничения.</b> Калькулятор не проверяет аллергии, сопутствующие болезни и взаимодействия. При подозрении на передозировку звоните 103 или 112.</p>
     <details class="terms" id="terms">
@@ -407,7 +425,7 @@ footer b{color:var(--ink);font-weight:600}
         <p><b>Ваши данные.</b> Возраст, пол, вес, рост и креатинин обрабатываются только на вашем устройстве и никуда не передаются. Список избранного хранится в памяти браузера на этом устройстве. Регистрации, аналитики и рекламы нет.</p>
         <p><b>Нашли ошибку в дозе?</b> Сообщите — это важнее всего: <a href="https://github.com/indromedas/doza-app/issues" target="_blank" rel="noopener">github.com/indromedas/doza-app/issues</a>.</p>
         <p><b>Права.</b> © 2026 indromedas. Использование для личной профессиональной работы — свободно. Копирование, изменение и распространение, в том числе коммерческое, — только с разрешения автора.</p>
-        <p class="ver">Версия 5 · данные сверены в ноябре 2026 года</p>
+        <p class="ver">Версия 6 · данные сверены в ноябре 2026 года</p>
       </div>
     </details>
   </footer>
@@ -1650,7 +1668,7 @@ let curTab='main';
 function render(){
   const p=readPatient();
   renderMetrics(p);
-  if(KITS[curTab])renderKit(KITS[curTab],p);else if(curTab==='card')renderCard(p);else if(curTab==='scales')renderScales(p);else renderMain(p);
+  if(KITS[curTab])renderKit(KITS[curTab],p);else if(curTab==='card')renderCard(p);else if(curTab==='scales')renderScales(p);else if(curTab==='ceap')renderCeap();else renderMain(p);
 }
 function renderMain(p){
   const d=cur();
@@ -2767,10 +2785,129 @@ document.addEventListener('input',e=>{if(e.target.closest&&e.target.closest('#sc
 document.addEventListener('change',e=>{if(e.target.closest&&e.target.closest('#scalesForm'))computeScales();});
 
 
-const TABS=['main','smp','anest','abx','card','scales'];
+/* ================= CEAP (пересмотр 2020, Lurie et al.) ================= */
+const CEAP_C=[
+  ['0','C0','Нет видимых или пальпируемых признаков заболевания вен'],
+  ['1','C1','Телеангиэктазии (< 1 мм) или ретикулярные вены (1–3 мм)'],
+  ['2','C2','Варикозные вены — подкожные вены диаметром ≥ 3 мм в положении стоя'],
+  ['2r','C2r','Рецидив варикозных вен'],
+  ['3','C3','Отёк'],
+  ['4a','C4a','Пигментация или экзема'],
+  ['4b','C4b','Липодерматосклероз или белая атрофия'],
+  ['4c','C4c','Венозная корона (corona phlebectatica)'],
+  ['5','C5','Зажившая венозная язва'],
+  ['6','C6','Открытая (активная) венозная язва'],
+  ['6r','C6r','Рецидив открытой венозной язвы']
+];
+const CEAP_E=[
+  ['Ep','Первичная'],
+  ['Esi','Вторичная внутривенная — например, посттромботическая болезнь'],
+  ['Ese','Вторичная внесосудистая — причина вне вены: повышение внутрибрюшного давления, ожирение, сердечная недостаточность, ограничение подвижности суставов, сдавление извне'],
+  ['Ec','Врождённая'],
+  ['En','Причина не установлена']
+];
+const CEAP_SEG=[
+  {sys:'s',name:'Поверхностные вены',items:[['Tel','Телеангиэктазии'],['Ret','Ретикулярные вены'],['GSVa','Большая подкожная вена выше колена'],['GSVb','Большая подкожная вена ниже колена'],['SSV','Малая подкожная вена'],['AASV','Передняя добавочная подкожная вена'],['NSV','Несафенные вены']]},
+  {sys:'d',name:'Глубокие вены',items:[['IVC','Нижняя полая вена'],['CIV','Общая подвздошная вена'],['IIV','Внутренняя подвздошная вена'],['EIV','Наружная подвздошная вена'],['PELV','Вены таза'],['CFV','Общая бедренная вена'],['DFV','Глубокая вена бедра'],['FV','Бедренная вена'],['POPV','Подколенная вена'],['TIBV','Вены голени (берцовые)'],['PRV','Малоберцовые вены'],['ATV','Передние большеберцовые вены'],['PTV','Задние большеберцовые вены'],['MUSV','Мышечные вены голени'],['GAV','Икроножные вены'],['SOV','Камбаловидные вены']]},
+  {sys:'p',name:'Перфорантные вены',items:[['TPV','Перфорантные вены бедра'],['CPV','Перфорантные вены голени']]}
+];
+const CEAP_P=[['','—'],['r','Рефлюкс'],['o','Обструкция'],['ro','Рефлюкс и обструкция'],['n','Поражена, без рефлюкса и обструкции']];
+const CEAP_EXAMPLE={c:['2','4a'],sym:'s',e:'Ep',seg:{GSVa:'r',GSVb:'r',CPV:'r'}};
+let ceapBuilt=false,ceapCopy='';
+function todayISO(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+function buildCeap(){
+  const f=$('#ceapForm');
+  f.innerHTML=`<div class="ph"><h2>Классификация CEAP</h2><span>пересмотр 2020 года · заполнено примером</span></div>
+  <div class="fields">
+    <div class="two">
+      <div class="field"><span class="lbl" id="ceapSideLbl">Конечность</span><div class="seg" role="radiogroup" aria-labelledby="ceapSideLbl"><input type="radio" name="ceapSide" id="ceapSideR" value="R" checked><label for="ceapSideR">Правая</label><input type="radio" name="ceapSide" id="ceapSideL" value="L"><label for="ceapSideL">Левая</label></div></div>
+      <div class="field"><label class="lbl" for="ceapDate">Дата осмотра</label><div class="inbox"><input id="ceapDate" type="date" value="${todayISO()}"></div></div>
+    </div>
+    <div class="sub-h">C — клинический класс</div>
+    <div class="ceap-list">${CEAP_C.map(c=>`<label class="check ceap-check"><input type="checkbox" id="ceapC_${c[0]}" value="${c[0]}"${CEAP_EXAMPLE.c.includes(c[0])?' checked':''}><span><b>${c[1]}</b> — ${c[2]}</span></label>`).join('')}</div>
+    <div class="field"><span class="lbl" id="ceapSymLbl">Симптомы</span><div class="seg" role="radiogroup" aria-labelledby="ceapSymLbl"><input type="radio" name="ceapSym" id="ceapSymS" value="s" checked><label for="ceapSymS">Есть (s)</label><input type="radio" name="ceapSym" id="ceapSymA" value="a"><label for="ceapSymA">Нет (a)</label></div>
+      <span class="hint">Симптомы: боль, тяжесть, распирание, зуд, судороги, другие жалобы, связанные с венами.</span></div>
+    <div class="sub-h">E — этиология</div>
+    <div class="ceap-list">${CEAP_E.map(e=>`<label class="check ceap-check"><input type="radio" name="ceapE" value="${e[0]}"${e[0]===CEAP_EXAMPLE.e?' checked':''}><span><b>${e[0]}</b> — ${e[1]}</span></label>`).join('')}</div>
+    <div class="sub-h">A и P — сегменты по данным УЗДС</div>
+    <span class="hint">Для каждого поражённого сегмента выберите находку. A и P собираются автоматически.</span>
+    ${CEAP_SEG.map(g=>`<div class="ceap-grp"><div class="gname">${g.name} (A<sub>${g.sys}</sub>)</div>${g.items.map(it=>`<div class="ceap-seg"><code>${it[0]}</code><label for="ceapS_${it[0]}">${it[1]}</label><div class="inbox"><select id="ceapS_${it[0]}" data-sys="${g.sys}" data-code="${it[0]}">${CEAP_P.map(o=>`<option value="${o[0]}"${(CEAP_EXAMPLE.seg[it[0]]||'')===o[0]?' selected':''}>${o[1]}</option>`).join('')}</select></div></div>`).join('')}</div>`).join('')}
+    <div><button type="button" class="copy" id="ceapReset">Очистить форму</button></div>
+  </div>`;
+  ceapBuilt=true;
+}
+function ceapExclusive(t){
+  if(!t||!t.id||!t.id.startsWith('ceapC_')||!t.checked)return;
+  const v=t.value,set=id=>{const el=$('#ceapC_'+id);if(el)el.checked=false;};
+  if(v==='0')CEAP_C.forEach(c=>{if(c[0]!=='0')set(c[0]);});
+  else{set('0');if(v==='2')set('2r');if(v==='2r')set('2');if(v==='6')set('6r');if(v==='6r')set('6');}
+}
+function fmtDate(iso){if(!iso)return'';const [y,m,d]=iso.split('-');return `${d}.${m}.${y}`;}
+function computeCeap(){
+  const codes=CEAP_C.filter(c=>$('#ceapC_'+c[0]).checked).map(c=>c[0]);
+  const sym=(document.querySelector('input[name=ceapSym]:checked')||{}).value||'';
+  const e=(document.querySelector('input[name=ceapE]:checked')||{}).value||'';
+  const side=(document.querySelector('input[name=ceapSide]:checked')||{}).value==='L'?'Левая нижняя конечность':'Правая нижняя конечность';
+  const date=fmtDate($('#ceapDate').value);
+  const segs=[];
+  document.querySelectorAll('#ceapForm select[data-code]').forEach(s=>{if(s.value)segs.push({code:s.dataset.code,sys:s.dataset.sys,v:s.value,name:s.closest('.ceap-seg').querySelector('label').textContent});});
+  const el=$('#ceapResult');
+  const head=`<div class="res-head"><div><div class="eyebrow">Хронические заболевания вен</div><h2>CEAP</h2><div class="who">${side}${date?' · '+date:''}</div></div><div class="pills"><span class="pill plain">пересмотр 2020</span></div></div>`;
+  const msgs=[];
+  if(!codes.length){el.innerHTML=head+`<div class="res-body"><ul class="msgs">${msgHTML({lvl:'warn',t:'Отметьте хотя бы один клинический класс (C).'})}</ul></div>`;ceapCopy='';return;}
+  const top=codes[codes.length-1],topN=parseInt(top,10);
+  const symS=sym?','+sym:'';
+  const C='C'+codes.join(',')+symS, Cb='C'+top+symS;
+  const sys=['s','p','d'].filter(k=>segs.some(x=>x.sys===k));
+  const A=sys.length?'A'+sys.join(','):'An';
+  const rS=segs.filter(x=>x.v.includes('r')).map(x=>x.code), oS=segs.filter(x=>x.v.includes('o')).map(x=>x.code);
+  const P=(rS.length||oS.length)?'P'+[rS.length?'r':'',oS.length?'o':''].filter(Boolean).join(','):'Pn';
+  const Padv=(rS.length||oS.length)?[rS.length?`Pr (${rS.join(', ')})`:'',oS.length?`Po (${oS.join(', ')})`:''].filter(Boolean).join(', '):'Pn';
+  const E=e||'E?';
+  const basic=`${Cb}, ${E}, ${A}, ${P}`, adv=`${C}, ${E}, ${A}, ${Padv}`;
+  if(!sym)msgs.push({lvl:'warn',t:'Укажите, есть ли симптомы: s — есть, a — нет.'});
+  if(!e)msgs.push({lvl:'warn',t:'Выберите этиологию (E).'});
+  if(topN>=3)msgs.push({lvl:'info',t:'Классы C3–C6 в отечественной практике соответствуют хронической венозной недостаточности (ХВН).'});
+  else if(topN>=1)msgs.push({lvl:'info',t:'Хроническое заболевание вен без признаков венозной недостаточности (C1–C2).'});
+  else if(sym==='s')msgs.push({lvl:'info',t:'C0s — жалобы без объективных признаков заболевания вен (в отечественной литературе — флебопатия).'});
+  if(topN>=2&&!rS.length&&!oS.length)msgs.push({lvl:'info',t:'Для расширенной формы отметьте сегменты с рефлюксом или обструкцией по данным УЗДС. Без них P = Pn.'});
+  if(e==='Esi'&&!segs.some(x=>x.sys==='d'))msgs.push({lvl:'info',t:'При вторичной внутривенной (посттромботической) этиологии обычно поражены глубокие вены — проверьте сегменты.'});
+  if(codes.includes('0')&&segs.length)msgs.push({lvl:'info',t:'Отмечен C0, но есть поражённые сегменты — проверьте клинический класс.'});
+  const row=(k,v,s)=>`<div class="row"><span class="k">${k}</span><span class="v">${v}</span><span class="s">${s}</span></div>`;
+  const cRows=codes.map((c,i)=>{const x=CEAP_C.find(y=>y[0]===c);return row(i?'':'C — клиника',x[1],x[2]);}).join('');
+  const sysName={s:'поверхностные',p:'перфорантные',d:'глубокие'};
+  const aRows=sys.length?sys.map((k,i)=>row(i?'':'A — анатомия',`A${k}`,`${sysName[k]}: ${segs.filter(x=>x.sys===k).map(x=>`${x.code} — ${x.name.toLowerCase()}`).join('; ')}`)).join(''):row('A — анатомия','An','поражённые сегменты не выявлены');
+  const pRows=(rS.length||oS.length)?[rS.length?row('P — патофизиология','Pr',`рефлюкс: ${rS.join(', ')}`):'',oS.length?row(rS.length?'':'P — патофизиология','Po',`обструкция: ${oS.join(', ')}`):''].join(''):row('P — патофизиология','Pn','патофизиологические изменения не выявлены');
+  const eRow=e?row('E — этиология',e,CEAP_E.find(x=>x[0]===e)[1]):row('E — этиология','—','не выбрана');
+  const symRow=row('Симптомы',sym||'—',sym==='s'?'есть (s)':sym==='a'?'нет (a)':'не указано');
+  ceapCopy=`${side}${date?', '+date:''}. CEAP: ${adv}.`;
+  el.innerHTML=head+`<div class="res-body">
+    <div class="figs" style="grid-template-columns:minmax(0,1fr)">
+      <div class="fig main"><span class="lab">Базовая CEAP</span><span class="val ceap-val">${basic}</span><span class="sub ui">по наивысшему клиническому классу, без сегментов</span></div>
+      <div class="fig"><span class="lab">Расширенная CEAP</span><span class="val ceap-val">${adv}</span><span class="sub ui">все клинические классы и поражённые сегменты</span></div>
+    </div>
+    <div class="label-card"><div class="ln"><span class="k">Dx:</span><span>${ceapCopy}</span></div><div class="foot"><span class="copied" id="ceapCopied" aria-live="polite"></span>${tgShare(ceapCopy)}<button type="button" class="copy" id="ceapCopyBtn">Скопировать</button></div></div>
+    ${msgs.length?`<ul class="msgs">${msgs.map(msgHTML).join('')}</ul>`:''}
+    <h3 class="card-h">Расшифровка</h3>
+    <div class="rows">${cRows}${symRow}${eRow}${aRows}${pRows}</div>
+    <div class="src"><div><span class="lbl">Источник</span>Lurie F., Passman M., Meisner M. et al. The 2020 update of the CEAP classification system and reporting standards. J Vasc Surg Venous Lymphat Disord. 2020;8(3):342–352.</div><p>Базовая форма — наивысший клинический класс; расширенная — все классы и сегменты с находками по УЗДС. Указывайте конечность и дату осмотра.</p></div>
+  </div>`;
+}
+function renderCeap(){if(!ceapBuilt)buildCeap();computeCeap();}
+document.addEventListener('change',e=>{if(e.target.closest&&e.target.closest('#ceapForm')){ceapExclusive(e.target);computeCeap();}});
+document.addEventListener('input',e=>{if(e.target.closest&&e.target.closest('#ceapForm'))computeCeap();});
+document.addEventListener('click',e=>{
+  if(e.target.id==='ceapReset'){document.querySelectorAll('#ceapForm input[type=checkbox]').forEach(x=>x.checked=false);document.querySelectorAll('#ceapForm input[name=ceapE]').forEach(x=>x.checked=false);document.querySelectorAll('#ceapForm select[data-code]').forEach(x=>x.value='');computeCeap();return;}
+  if(e.target.id!=='ceapCopyBtn')return;
+  const note=$('#ceapCopied');
+  const fallback=()=>{const ln=$('#ceapResult .label-card');if(!ln)return;const sel=window.getSelection();const rg=document.createRange();rg.selectNodeContents(ln);sel.removeAllRanges();sel.addRange(rg);note.textContent='Выделено — нажмите Ctrl+C';};
+  try{navigator.clipboard.writeText(ceapCopy).then(()=>{note.textContent='Скопировано';},fallback);}catch(err){fallback();}
+});
+
+const TABS=['main','smp','anest','abx','card','scales','ceap'];
 function setTab(t){
   curTab=TABS.includes(t)?t:'main';
-  $('#paneMain').hidden=curTab!=='main';$('#paneSmp').hidden=curTab!=='smp';$('#paneAnest').hidden=curTab!=='anest';$('#paneCard').hidden=curTab!=='card';$('#paneAbx').hidden=curTab!=='abx';$('#paneScales').hidden=curTab!=='scales';
+  $('#paneMain').hidden=curTab!=='main';$('#paneSmp').hidden=curTab!=='smp';$('#paneAnest').hidden=curTab!=='anest';$('#paneCard').hidden=curTab!=='card';$('#paneAbx').hidden=curTab!=='abx';$('#paneScales').hidden=curTab!=='scales';$('#paneCeap').hidden=curTab!=='ceap';
   document.querySelectorAll('.tabs [data-tab]').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.tab===curTab)));
   const want=curTab==='main'?'':'#'+curTab;
   if(location.hash!==want){try{history.replaceState(null,'',want||location.pathname+location.search);}catch(e){}}
@@ -2782,7 +2919,7 @@ document.addEventListener('input',e=>{
   const id=e.target.id;
   if(id==='drugQ'){filterDrugs();return;}
   if(id==='smpQ'||id==='anestQ'||id==='abxQ'){filterKit(KITS[id.slice(0,-1)]);return;}
-  if(e.target.closest('#scalesForm'))return;
+  if(e.target.closest('#scalesForm')||e.target.closest('#ceapForm'))return;
   if(e.target.closest('.panel')&&!e.target.matches('[name=form],[name=mode],[name=smpForm],[name=smpReg],[name=anestForm],[name=anestReg],[name=abxForm],[name=abxReg],[name=smpVar]'))render();
 });
 document.addEventListener('change',e=>{
