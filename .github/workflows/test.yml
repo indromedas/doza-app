@@ -1,0 +1,23 @@
+name: Тесты расчётов
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Сборка (сверяет версии в sw.js и исходнике)
+        run: python build.py
+      - name: index.html собран из актуального исходника
+        run: git diff --exit-code -- index.html
+      - name: Тесты доз
+        run: node tests/run.js
