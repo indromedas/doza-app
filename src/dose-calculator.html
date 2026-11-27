@@ -177,9 +177,15 @@ details.trace ol{margin:10px 0 0;padding-left:22px;display:grid;gap:4px;font:13p
 .empty{padding:28px 20px;color:var(--muted)}
 .empty h2{color:var(--ink);margin-bottom:6px}
 
-.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin-bottom:18px;overflow-x:auto}
-.tabs button{font:600 14.5px var(--font-ui);padding:10px 16px;border:0;background:none;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px;cursor:pointer;white-space:nowrap;display:flex;gap:8px;align-items:center}
-.tabs button[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent)}
+.tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;margin-bottom:18px}
+.tabs button{min-width:0;min-height:44px;font:600 14.5px var(--font-ui);padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--muted);cursor:pointer;display:flex;gap:6px;align-items:center;justify-content:center}
+.tabs button[aria-selected="true"]{color:var(--accent);border-color:var(--accent);background:var(--accent-soft)}
+.tabs .tab-short{display:none}
+@media(max-width:720px){
+  .tabs button{font-size:13px;line-height:1.2;padding:5px 2px}
+  .tabs .tab-full,.tabs button .cnt{display:none}
+  .tabs .tab-short{display:inline}
+}
 .tabs .cnt{font:600 11px var(--font-num);background:var(--sunk);color:var(--muted);border-radius:999px;padding:1px 7px}
 .work-pane{display:grid;gap:20px;min-width:0}
 .rows{display:grid;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden}
@@ -260,13 +266,13 @@ footer b{color:var(--ink);font-weight:600}
   <div class="notice" role="note"><b>Важно</b><span>Это справочный расчёт по инструкциям из Регистра лекарственных средств России (rlsnet.ru). Он не заменяет назначение врача и не учитывает аллергии и лекарственные взаимодействия. Перед приёмом сверьтесь с инструкцией к вашей упаковке: у разных производителей дозировки могут отличаться.</span></div>
 
   <nav class="tabs" role="tablist" aria-label="Разделы калькулятора">
-    <button type="button" role="tab" id="tabMain" data-tab="main" aria-selected="true">Амбулаторные формы <span class="cnt" id="mainCnt">33</span></button>
+    <button type="button" role="tab" id="tabMain" data-tab="main" aria-selected="true" aria-label="Амбулаторные формы"><span class="tab-full">Амбулаторные формы</span><span class="tab-short">Амбул.<br>формы</span><span class="cnt" id="mainCnt">33</span></button>
     <button type="button" role="tab" id="tabCeap" data-tab="ceap" aria-selected="false">CEAP</button>
-    <button type="button" role="tab" id="tabSclero" data-tab="sclero" aria-selected="false">Склеротерапия</button>
-    <button type="button" role="tab" id="tabSmp" data-tab="smp" aria-selected="false">СМП · укладка 1165н <span class="cnt" id="smpCnt">85</span></button>
-    <button type="button" role="tab" id="tabAnest" data-tab="anest" aria-selected="false">Анестезиология <span class="cnt" id="anestCnt">12</span></button>
-    <button type="button" role="tab" id="tabAbx" data-tab="abx" aria-selected="false">Антибиотики в/в <span class="cnt" id="abxCnt">9</span></button>
-    <button type="button" role="tab" id="tabCard" data-tab="card" aria-selected="false">Экстренная карточка</button>
+    <button type="button" role="tab" id="tabSclero" data-tab="sclero" aria-selected="false" aria-label="Склеротерапия"><span class="tab-full">Склеротерапия</span><span class="tab-short">Склеро-<br>терапия</span></button>
+    <button type="button" role="tab" id="tabSmp" data-tab="smp" aria-selected="false" aria-label="СМП · укладка 1165н"><span class="tab-full">СМП · укладка 1165н</span><span class="tab-short">СМП</span><span class="cnt" id="smpCnt">85</span></button>
+    <button type="button" role="tab" id="tabAnest" data-tab="anest" aria-selected="false" aria-label="Анестезиология"><span class="tab-full">Анестезиология</span><span class="tab-short">Анестези-<br>ология</span><span class="cnt" id="anestCnt">12</span></button>
+    <button type="button" role="tab" id="tabAbx" data-tab="abx" aria-selected="false" aria-label="Антибиотики в/в"><span class="tab-full">Антибиотики в/в</span><span class="tab-short">Антибио-<br>тики в/в</span><span class="cnt" id="abxCnt">9</span></button>
+    <button type="button" role="tab" id="tabCard" data-tab="card" aria-selected="false" aria-label="Экстренная карточка"><span class="tab-full">Экстренная карточка</span><span class="tab-short">Экстр.<br>карточка</span></button>
     <button type="button" role="tab" id="tabScales" data-tab="scales" aria-selected="false">Шкалы</button>  </nav>
 
   <main class="layout">
