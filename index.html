@@ -384,6 +384,11 @@ footer b{color:var(--ink);font-weight:600}
       <div class="panel" aria-labelledby="smpH">
         <div class="ph"><h2 id="smpH">Укладка общепрофильная СМП</h2><span>Состав — приказ Минздрава России № 1165н</span></div>
         <div class="seg inline" role="radiogroup" aria-label="Вид укладки" style="margin-bottom:14px"><input type="radio" name="smpVar" id="smpVarGen" value="gen" checked><label for="smpVarGen">Общепрофильная</label><input type="radio" name="smpVar" id="smpVarRean" value="rean"><label for="smpVarRean">Реанимационная</label></div>
+        <details class="hist" id="myKit"><summary>Моя укладка</summary>
+          <p class="hint">Выберите препарат и форму выпуска в каталоге СМП, затем сохраните их здесь.</p>
+          <button type="button" class="copy" id="kitSave"></button>
+          <div class="hist-list" id="kitEntries"></div><span id="kitNotice" role="status"></span>
+        </details>
         <div class="inbox search"><input id="smpQ" type="search" autocomplete="off" placeholder="Препарат: эпинефрин, амиодарон, налоксон…" aria-label="Поиск в укладке"></div>
         <div class="dgroups" id="smpDrugs"></div>
         <div class="opts">
@@ -1632,6 +1637,7 @@ function readPatient(){
     }
   }
   setErr('fCr','eCr',ce);
+  p.creatError=ce;
   return p;
 }
 
@@ -2534,6 +2540,49 @@ function setSmpVariant(v){
   $('#smpH').textContent=v==='rean'?'Укладка специализированная (реанимационная)':'Укладка общепрофильная СМП';
   K.st.built=null;renderKitDrugs(K);filterKit(K);render();
 }
+const kitStorageKey='rx-smp-personal-v1';
+const personalCatalog=new Map([...SMP,...REANIM].map(d=>[d.id,d]));
+let personalKit=[];
+try{
+  const saved=JSON.parse(localStorage.getItem(kitStorageKey)||'[]');
+  if(Array.isArray(saved))personalKit=saved.filter(e=>personalCatalog.get(e?.drug)?.forms.some(f=>f.id===e.form));
+}catch{}
+function showPersonalKit(d,f){
+  const saved=personalKit.some(e=>e.drug===d.id&&e.form===f.id);
+  $('#kitSave').disabled=saved;
+  $('#kitSave').textContent=(saved?'Добавлено: ':'Добавить: ')+d.name+' · '+f.label;
+  $('#kitEntries').innerHTML=personalKit.map((e,i)=>{
+    const drug=personalCatalog.get(e.drug);
+    const label=esc(drug.name+' · '+drug.forms.find(form=>form.id===e.form).label);
+    return `<div><button type="button" class="preset" data-open-kit="${i}">${label}</button> <button type="button" class="copy" data-remove-kit="${i}" aria-label="Удалить: ${label}">Удалить</button></div>`;
+  }).join('');
+}
+$('#myKit').addEventListener('click',event=>{
+  const b=event.target.closest('button');
+  if(!b)return;
+  const K=KITS.smp;
+  if(b.id==='kitSave'){
+    const drug=K.list.find(d=>d.id===K.st.drug);
+    const form=K.st.form[drug.id]||drug.forms[0].id;
+    if(!personalKit.some(e=>e.drug===drug.id&&e.form===form))personalKit.push({drug:drug.id,form});
+  }else if(b.hasAttribute('data-remove-kit')){
+    personalKit.splice(Number(b.dataset.removeKit),1);
+  }else{
+    const e=personalKit[Number(b.dataset.openKit)];
+    if(!e)return;
+    if(!K.list.some(d=>d.id===e.drug)){
+      $('#smpVarRean').checked=true;
+      setSmpVariant('rean');
+    }
+    $('#smpQ').value='';
+    K.st.drug=e.drug;K.st.form[e.drug]=e.form;
+    renderKitDrugs(K);filterKit(K);render();
+    return;
+  }
+  try{localStorage.setItem(kitStorageKey,JSON.stringify(personalKit));$('#kitNotice').textContent='';}
+  catch{$('#kitNotice').textContent='Укладка доступна только до закрытия приложения.';}
+  render();
+});
 const E=(K,s)=>document.getElementById(K.key+s);
 function renderKitDrugs(K){
   E(K,'Drugs').innerHTML=favHTML(K.key,K.list)+K.groups.map(g=>`<div class="dgroup" data-g="${g.id}"><div class="gname">${g.name}</div><div class="drow">${
@@ -2630,6 +2679,7 @@ function syncKitOptions(K,d){
 function renderKit(K,p){
   const d=K.list.find(x=>x.id===K.st.drug);
   const {f,reg}=syncKitOptions(K,d);
+  if(K.key==='smp')showPersonalKit(d,f);
   const el=E(K,'Result');
   const who=p.ok?`${ageText(p)} · ${p.sex==='m'?'муж.':'жен.'} · ${nf(p.w,1)} кг${p.h?` · ${nf(p.h,0)} см`:''}`:'';
   const gid=K.key==='anest'?(d.agMap||d.g):K.key==='abx'?(d.xg||d.g):(d.sg||d.g);
@@ -2643,12 +2693,32 @@ function renderKit(K,p){
     return;
   }
   if(!p.ok){el.innerHTML=`<div class="empty"><h2>${d.name}</h2><p>Укажите возраст, пол и вес пациента — здесь появятся доза, объём и способ введения.</p></div>`;return;}
+  if(K.key==='abx'&&p.creatError){
+    el.innerHTML=head(['stop','Проверьте креатинин'])+'<div class="res-body"><p>'+esc(p.creatError)+'. Проверьте значение и единицы измерения.</p></div>';
+    return;
+  }
   const r=smpCalc(d,f,reg,p);
+  let renalNote='';
+  let renalAlert=false;
+  if(K.key==='abx'){
+    const metric=p.crclMethod==='cg'?'КК (Кокрофт–Голт), мл/мин':'рСКФ (Шварц), мл/мин/1,73 м²';
+    renalNote=p.crcl==null?'Функция почек не оценена. '+(p.crclMethod==='noheight'?'Для расчёта нужен рост.':p.crclMethod==='infant'?'Для этого возраста оценка недоступна.':'Креатинин не указан.'):`${metric}: ${nf(p.crcl,1)}.`;
+    const isRenalMessage=m=>m.t.startsWith(renalLabel(p)+' ');
+    renalAlert=r.msgs.some(isRenalMessage);
+    if(renalAlert&&p.crclMethod==='schwartz'){
+      r.msgs=r.msgs.filter(m=>!isRenalMessage(m));
+      r.msgs.push({lvl:'warn',t:'Проверьте детский режим по инструкции препарата.'});
+    }
+    renalNote+=' Автоматическая коррекция дозы и интервала не выполняется.';
+    if(renalAlert)r.msgs.push({lvl:'stop',t:'Требуется отдельная проверка режима по функции почек.'});
+    else if(p.crcl==null)r.msgs.push({lvl:'warn',t:'Показана базовая схема.'});
+  }
   if(p.implausible)r.msgs.push({lvl:'warn',t:`ИМТ ${nf(p.bmi,1)} — похоже на ошибку ввода. Проверьте вес и рост.`});
   const stopped=r.msgs.some(m=>m.lvl==='stop');
   const order={stop:0,warn:1,info:2};r.msgs.sort((a,b)=>order[a.lvl]-order[b.lvl]);
   const status=stopped?['stop','Расчёт остановлен']:r.msgs.some(m=>m.lvl==='warn')?['warn','Есть ограничения']:['ok','Можно рассчитать'];
   let html=head(status)+'<div class="res-body">';
+  if(renalNote)html+='<p class="hint">'+esc(renalNote)+'</p>';
   const how=`<div class="fig"><span class="lab">Как вводить</span><span class="val txt">${r.route||'—'}</span><span class="sub ui">${[r.freq,r.maxT].filter(Boolean).join(' · ')||'&nbsp;'}</span></div>`;
   if(!stopped&&r.kind==='bolus'){
     const u=r.u;const doseNum=same(r.lo,r.hi)?fN(r.lo):fN(r.lo)+'–'+fN(r.hi);
@@ -2670,7 +2740,8 @@ function renderKit(K,p){
     }else{fig2=`<div class="fig"><span class="lab">Форма</span><span class="val txt">${f.label}</span><span class="sub ui">&nbsp;</span></div>`;}
     html+=`<div class="figs"><div class="fig main"><span class="lab">Доза</span><span class="val">${doseNum} <small>${u}</small></span><span class="sub">${sub1}</span></div>${fig2}${how}</div>`;
     const sText=`${d.name} ${fUR(r.lo,r.hi,u)}${amtTxt?` (${amtTxt})`:''} ${r.route}${r.freq?', '+r.freq:''}.${r.maxT?' '+r.maxT[0].toUpperCase()+r.maxT.slice(1)+'.':''}`;
-    K.copy=sText.replace(/ /g,' ');html+=cardCopy(sText);
+    const copyText=renalNote?sText+' '+renalNote:sText;
+    K.copy=copyText.replace(/ /g,' ');html+=cardCopy(copyText);
   }else if(!stopped&&r.kind==='inf'){
     const I=r.inf;
     const sub1=I.kgH?`${fN(I.lo*60/1000)}–${fU(I.hi*60/1000,'мг')}/ч`:(I.perKg||I.I.ru==='мг/ч')?`${fN(I.lo)}–${fU(I.hi,'мкг')}/мин`:'диапазон титрования';
