@@ -309,8 +309,9 @@ footer b{color:var(--ink);font-weight:600}
         <div class="two">
           <div class="field" id="fW">
             <label class="lbl" for="weight">Вес</label>
-            <div class="inbox"><input id="weight" inputmode="decimal" autocomplete="off" value=""><span class="u">кг</span></div>
+            <div class="inbox"><input id="weight" aria-describedby="weightHint eW" inputmode="decimal" autocomplete="off" value=""><span class="u">кг</span></div>
             <span class="err" id="eW"></span>
+            <span class="hint" id="weightHint" hidden><span id="weightReference"></span> · <a id="weightSource" target="_blank" rel="noopener"></a><br>Для расчёта дозы введите измеренный вес.</span>
           </div>
           <div class="field" id="fH">
             <label class="lbl" for="height">Рост</label>
@@ -1570,6 +1571,22 @@ function perDesc(form){
 function val(id){const s=String($('#'+id).value).trim().replace(',','.');if(s==='')return null;const v=Number(s);return isFinite(v)?v:NaN;}
 function setErr(fid,eid,msg){$('#'+eid).textContent=msg||'';$('#'+fid).classList.toggle('bad',!!msg);}
 
+// P50 (кг), по полным месяцам: ВОЗ 0–23, CDC 24–215 (месячная группа).
+// Исходные M: smart-on-fhir/growth-chart-app, GCCurveDataJSON.txt, WHO_WEIGHT и CDC_WEIGHT.
+const weightMedian={
+  m:[3.3,4.5,5.6,6.4,7,7.5,7.9,8.3,8.6,8.9,9.2,9.4,9.6,9.9,10.1,10.3,10.5,10.7,10.9,11.1,11.3,11.5,11.8,12,12.7,12.9,13,13.2,13.3,13.4,13.6,13.7,13.8,14,14.1,14.3,14.4,14.5,14.7,14.9,15,15.2,15.3,15.5,15.6,15.8,16,16.1,16.3,16.5,16.7,16.8,17,17.2,17.4,17.6,17.7,17.9,18.1,18.3,18.5,18.7,18.9,19.1,19.2,19.4,19.6,19.8,20,20.2,20.4,20.6,20.8,21,21.2,21.4,21.6,21.8,22,22.2,22.4,22.6,22.8,23,23.2,23.4,23.6,23.8,24,24.2,24.4,24.6,24.9,25.1,25.3,25.5,25.8,26,26.2,26.4,26.7,26.9,27.2,27.4,27.7,27.9,28.2,28.4,28.7,28.9,29.2,29.5,29.8,30,30.3,30.6,30.9,31.2,31.5,31.8,32.1,32.4,32.7,33,33.3,33.7,34,34.3,34.7,35,35.4,35.7,36.1,36.4,36.8,37.2,37.5,37.9,38.3,38.7,39.1,39.5,39.9,40.3,40.7,41.1,41.5,41.9,42.3,42.8,43.2,43.6,44.1,44.5,44.9,45.4,45.8,46.3,46.7,47.2,47.6,48.1,48.5,49,49.4,49.9,50.3,50.8,51.2,51.7,52.1,52.6,53,53.5,53.9,54.4,54.8,55.2,55.6,56.1,56.5,56.9,57.3,57.7,58.1,58.5,58.9,59.3,59.7,60,60.4,60.7,61.1,61.4,61.8,62.1,62.4,62.7,63,63.3,63.6,63.9,64.2,64.4,64.7,65,65.2,65.4,65.7,65.9,66.1,66.3,66.5,66.7,66.9,67.1],
+  f:[3.2,4.2,5.1,5.8,6.4,6.9,7.3,7.6,7.9,8.2,8.5,8.7,8.9,9.2,9.4,9.6,9.8,10,10.2,10.4,10.6,10.9,11.1,11.3,12.1,12.3,12.4,12.6,12.7,12.9,13,13.2,13.3,13.5,13.6,13.8,13.9,14.1,14.2,14.4,14.6,14.7,14.9,15,15.2,15.4,15.5,15.7,15.9,16,16.2,16.4,16.6,16.7,16.9,17.1,17.3,17.5,17.7,17.8,18,18.2,18.4,18.6,18.8,19,19.2,19.4,19.5,19.7,19.9,20.1,20.3,20.5,20.7,20.9,21.2,21.4,21.6,21.8,22,22.2,22.4,22.6,22.9,23.1,23.3,23.6,23.8,24,24.3,24.5,24.7,25,25.2,25.5,25.8,26,26.3,26.6,26.8,27.1,27.4,27.7,28,28.2,28.5,28.8,29.1,29.4,29.8,30.1,30.4,30.7,31,31.4,31.7,32,32.4,32.7,33.1,33.4,33.8,34.1,34.5,34.8,35.2,35.6,35.9,36.3,36.7,37,37.4,37.8,38.1,38.5,38.9,39.2,39.6,40,40.4,40.7,41.1,41.5,41.8,42.2,42.6,42.9,43.3,43.6,44,44.3,44.7,45,45.3,45.7,46,46.3,46.6,46.9,47.2,47.5,47.8,48.1,48.4,48.7,49,49.2,49.5,49.7,50,50.2,50.5,50.7,50.9,51.1,51.4,51.6,51.8,51.9,52.1,52.3,52.5,52.7,52.8,53,53.1,53.3,53.4,53.6,53.7,53.8,53.9,54.1,54.2,54.3,54.4,54.5,54.6,54.7,54.8,54.9,55,55.1,55.2,55.3,55.4,55.4,55.5,55.6,55.7,55.8,55.9,56,56.1,56.1]
+};
+function showWeightReference(months,sex){
+  const hint=$('#weightHint');
+  hint.hidden=months==null||months>=216;
+  if(hint.hidden)return;
+  const kg=key=>nf(weightMedian[key][months],1)+' кг';
+  $('#weightReference').textContent='Медиана веса: '+(sex?kg(sex):'мальчики '+kg('m')+', девочки '+kg('f'));
+  const source=$('#weightSource');
+  source.textContent=months<24?'ВОЗ':'CDC';
+  source.href='https://www.cdc.gov/growthcharts/'+(months<24?'who':'cdc')+'-data-files.htm';
+}
 function readPatient(){
   const y=val('ageY'),mo=val('ageMo'),w=val('weight'),h=val('height'),cr=val('creat');
   const sex=document.querySelector('[name=sex]:checked')?.value;
@@ -1584,6 +1601,7 @@ function readPatient(){
   setErr('fAge','eAge',ae);setErr('fW','eW',we);setErr('fH','eH',he);
 
   const ageM=Math.floor((y||0)*12+(mo||0));
+  showWeightReference(ae?null:ageM,sex);
   const ageY=ageM/12;
   const hv=he||h==null?null:h;
   const p={ok,ageM,ageY,sex,w:ok?w:null,h:hv,liver:$('#liver').checked,preg:null,crcl:null,crclMethod:null};
