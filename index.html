@@ -284,6 +284,12 @@ footer p{margin:0}
   #printArea .figs{grid-template-columns:1.25fr 1fr 1fr!important}
   @page{margin:14mm}
 }
+.tab-hint{margin:-10px 0 16px;font-size:13px;line-height:1.45;color:var(--muted)}
+.empty .copy{margin-top:12px}
+.to-list{margin:-6px 0 12px}
+@media (min-width:881px){.to-list{display:none}}
+.an li b{color:var(--ink)}
+.an .linkbtn{margin-top:6px}
 .terms .ver{font:12px var(--font-num);color:var(--muted)}
 footer b{color:var(--ink);font-weight:600}
 </style>
@@ -317,6 +323,7 @@ footer b{color:var(--ink);font-weight:600}
     <button type="button" role="tab" id="tabAbx" data-tab="abx" aria-selected="false" aria-label="Антибиотики в/в"><span class="tab-full">Антибиотики в/в</span><span class="tab-short">Антибио-<br>тики в/в</span><span class="cnt" id="abxCnt">9</span></button>
     <button type="button" role="tab" id="tabCard" data-tab="card" aria-selected="false" aria-label="Экстренная карточка"><span class="tab-full">Экстренная карточка</span><span class="tab-short">Экстр.<br>карточка</span></button>
     <button type="button" role="tab" id="tabScales" data-tab="scales" aria-selected="false">Шкалы</button>  </nav>
+  <p class="tab-hint" id="tabHint"></p>
 
   <main class="layout">
     <aside class="panel" aria-labelledby="patH">
@@ -501,7 +508,7 @@ footer b{color:var(--ink);font-weight:600}
         <p><b>Ваши данные.</b> Возраст, пол, вес, рост и креатинин обрабатываются только на вашем устройстве и никуда не передаются. Избранное и последние 10 расчётов хранятся в памяти браузера на этом устройстве; историю можно очистить кнопкой под данными пациента. Регистрации, аналитики и рекламы нет.</p>
         <p><b>Нашли ошибку в дозе?</b> Сообщите — это важнее всего: <a href="https://github.com/indromedas/doza-app/issues" target="_blank" rel="noopener">github.com/indromedas/doza-app/issues</a>.</p>
         <p><b>Права.</b> © 2026 indromedas. Использование для личной профессиональной работы — свободно. Копирование, изменение и распространение, в том числе коммерческое, — только с разрешения автора.</p>
-        <p class="ver">Версия <span id="verNum">17</span> · данные сверены в ноябре 2026 года · <button type="button" class="copy" id="showChanges">Что нового</button></p>
+        <p class="ver">Версия <span id="verNum">18</span> · данные сверены в ноябре 2026 года · <button type="button" class="copy" id="showChanges">Что нового</button></p>
       </div>
     </details>
   </footer>
@@ -2258,6 +2265,9 @@ function render(){
   renderMetrics(p);
   if(KITS[curTab]){renderKit(KITS[curTab],p);if(curTab==='anest')renderAir(p);}else if(curTab==='card')renderCard(p);else if(curTab==='scales')renderScales(p);else if(curTab==='ceap')renderCeap();else if(curTab==='sclero')renderSclero(p);else renderMain(p);
   lastP=p;scheduleHist();
+  const resEl=curTab==='main'?$('#result'):KITS[curTab]?E(KITS[curTab],'Result'):null;
+  if(resEl&&resEl.firstElementChild&&!resEl.querySelector('.to-list'))resEl.insertAdjacentHTML('afterbegin',`<button type="button" class="copy to-list" data-to-list="${curTab==='main'?'drugH':curTab+'H'}">↑ Другой препарат</button>`);
+  syncTabHint();
 }
 function renderMain(p){
   const d=cur();
@@ -2268,7 +2278,7 @@ function renderMain(p){
   const el=$('#result');
 
   if(!p.ok){
-    el.innerHTML=`<div class="empty"><h2>${d.name}</h2><p>Укажите возраст, пол и вес пациента — здесь появятся разовая доза, кратность и суточный максимум.</p></div>`;
+    el.innerHTML=`<div class="empty"><h2>${d.name}</h2><p>Укажите возраст, пол и вес пациента — здесь появятся разовая доза, кратность и суточный максимум.</p><button type="button" class="copy" data-fill-patient>Указать пациента</button></div>`;
     return;
   }
 
@@ -3229,7 +3239,7 @@ function renderKit(K,p){
     el.innerHTML=head(null)+`<div class="res-body"><p class="info-text">${d.info}</p>${d.link?`<button type="button" class="linkbtn" id="${K.key}Link" data-link="${d.link}">Открыть расчёт во вкладке «Амбулаторные формы»</button>`:''}${srcHTML}</div>`;
     return;
   }
-  if(!p.ok){el.innerHTML=`<div class="empty"><h2>${d.name}</h2><p>Укажите возраст, пол и вес пациента — здесь появятся доза, объём и способ введения.</p></div>`;return;}
+  if(!p.ok){el.innerHTML=`<div class="empty"><h2>${d.name}</h2><p>Укажите возраст, пол и вес пациента — здесь появятся доза, объём и способ введения.</p><button type="button" class="copy" data-fill-patient>Указать пациента</button></div>`;return;}
   if(K.key==='abx'&&p.creatError){
     el.innerHTML=head(['stop','Проверьте креатинин'])+'<div class="res-body"><p>'+esc(p.creatError)+'. Проверьте значение и единицы измерения.</p></div>';
     return;
@@ -3875,8 +3885,9 @@ function startCode(){
 
 /* ================= Что нового ================= */
 // APP_VER должен совпадать с номером в sw.js (doza-vN) — build.py проверяет
-const APP_VER=17;
+const APP_VER=18;
 const CHANGES=[
+  {v:18,items:['Проще начать: подписи к вкладкам, а после выбора препарата экран сам переходит к расчёту.']},
   {v:17,items:['Антикоагулянты и антиагреганты сверены с инструкциями в РЛС: исправлены дозы надропарина, фондапаринукса и сулодексида, у каждого препарата — прямая ссылка на инструкцию.','Надропарин: добавлена профилактика у больных на постельном режиме.']},
   {v:15,items:['Вкладка «Анестезиология» теперь называется «АиР»: скорость инфузии в каплях, ожоги с инфузией по Паркленду, шкалы Апгар и Сильвермана.','Кнопка «В Telegram» отправляет ссылку на готовый расчёт — коллега откроет тот же препарат с теми же данными пациента.','Печать и PDF схемы с датой.','«Мой набор»: отметьте свои препараты ☆ и включите «Только мой набор».']},
   {v:14,items:['Расчёт доз для всех антикоагулянтов и антиагрегантов с коррекцией по функции почек, массе и возрасту.']}
@@ -3898,7 +3909,7 @@ document.addEventListener('click',e=>{
 function checkVersion(){
   let seen=null,returning=false;
   try{seen=+localStorage.getItem(VER_KEY)||null;returning=Object.keys(localStorage).some(k=>k.startsWith('doza-')||k.startsWith('rx-'));}catch(err){}
-  if(seen==null&&!returning){try{localStorage.setItem(VER_KEY,String(APP_VER));}catch(err){}return;}
+  if(seen==null&&!returning){showWelcome();return;}
   // плашка появилась в версии 15: кто пришёл без отметки — видел максимум 14-ю
   if(seen==null)seen=14;
   if(seen<APP_VER)showChanges(seen);
@@ -3940,6 +3951,52 @@ document.addEventListener('change',e=>{
   const t=e.target;if(!t.dataset||!t.dataset.mine)return;
   MINE[t.dataset.mine]=t.checked;try{localStorage.setItem(MINE_KEY,JSON.stringify(MINE));}catch(err){}
   if(t.dataset.mine==='main')filterDrugs();else filterKit(KITS[t.dataset.mine]);
+});
+/* ================= Первые шаги: подписи вкладок, прокрутка, приветствие ================= */
+const TAB_DESC={
+  main:'Амбулаторные формы: разовая и суточная доза таблеток, суспензий и капель по возрасту и массе.',
+  ceap:'CEAP: классификация хронических заболеваний вен (пересмотр 2020) с расшифровкой.',
+  sclero:'Склеротерапия: объём и предельные дозы склерозантов, пена по методу Тессари.',
+  smp:'СМП: препараты укладки скорой помощи по приказу Минздрава № 1165н — доза и объём из ампулы.',
+  anest:'АиР — анестезиология и реанимация: препараты, перфузоры, капли, ожоги, оценка новорождённого.',
+  abx:'Антибиотики в/в: дозы для стационара с поправкой на функцию почек.',
+  card:'Экстренная карточка: всё для реанимации по массе — интубационная трубка, разряд, дозы.',
+  scales:'Шкалы: Глазго, qSOFA и NEWS2.'
+};
+function syncTabHint(){const h=$('#tabHint');if(h)h.textContent=TAB_DESC[curTab]||'';}
+const noMotion=()=>!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
+function scrollToEl(el){
+  if(!el||!el.getBoundingClientRect)return;
+  const t=el.getBoundingClientRect().top;
+  if(t>=0&&t<window.innerHeight*0.5)return; // начало уже на экране
+  try{el.scrollIntoView({block:'start',behavior:noMotion()?'auto':'smooth'});}catch(err){el.scrollIntoView();}
+}
+function markSeen(){try{localStorage.setItem(VER_KEY,String(APP_VER));}catch(err){}}
+function showWelcome(){
+  showNotice('Добро пожаловать в RX','Калькулятор доз для медицинских специалистов. Работает без интернета, данные пациента никуда не отправляются.',[
+    '<b>Укажите пациента</b> — возраст, пол и массу. Креатинин — если доза зависит от функции почек.',
+    '<b>Выберите препарат</b> — в списке вкладки или через поиск вверху.',
+    '<b>Получите дозу</b> в мл, таблетках или ампулах — с расчётом и ссылкой на инструкцию.'
+  ]);
+  $('#appNotice .an-t').insertAdjacentHTML('beforeend','<div><button type="button" class="linkbtn" id="tryExample">Попробовать на примере</button></div>');
+}
+document.addEventListener('click',e=>{
+  const t=e.target;
+  const tl=t.closest&&t.closest('[data-to-list]');
+  if(tl){scrollToEl(document.getElementById(tl.dataset.toList));return;}
+  if(t.closest&&t.closest('[data-fill-patient]')){
+    $('#patH').scrollIntoView({block:'start',behavior:noMotion()?'auto':'smooth'});
+    const empty=['ageY','weight'].map(id=>$('#'+id)).find(x=>!x.value);
+    setTimeout(()=>{try{(empty||$('#ageY')).focus({preventScroll:true});}catch(err){}},noMotion()?0:400);
+    return;
+  }
+  if(t.id==='tryExample'){
+    $('#appNotice').hidden=true;markSeen();
+    document.querySelector('.presets [data-p="4,0,m,16,104,"]').click();
+    state.drug='paracetamol';renderDrugs();filterDrugs();
+    setTab('main');
+    setTimeout(()=>scrollToEl($('#result')),50);
+  }
 });
 function syncMine(){document.querySelectorAll('[data-mine]').forEach(c=>{c.checked=!!MINE[c.dataset.mine];});}
 
@@ -4020,6 +4077,7 @@ function setTab(t){
   curTab=TABS.includes(t)?t:'main';
   $('#paneMain').hidden=curTab!=='main';$('#paneSmp').hidden=curTab!=='smp';$('#paneAnest').hidden=curTab!=='anest';$('#paneCard').hidden=curTab!=='card';$('#paneAbx').hidden=curTab!=='abx';$('#paneScales').hidden=curTab!=='scales';$('#paneCeap').hidden=curTab!=='ceap';$('#paneSclero').hidden=curTab!=='sclero';
   document.querySelectorAll('.tabs [data-tab]').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.tab===curTab)));
+  syncTabHint();
   const want=curTab==='main'?'':'#'+curTab;
   if(location.hash!==want){try{history.replaceState(null,'',want||location.pathname+location.search);}catch(e){}}
   render();
@@ -4074,7 +4132,7 @@ $('#drugs').addEventListener('click',e=>{
   const b=e.target.closest('.drug');if(!b)return;
   state.drug=b.dataset.id;
   document.querySelectorAll('#drugs .drug').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.id===b.dataset.id)));
-  render();
+  render();setTimeout(()=>scrollToEl($('#result')),30);
 });
 document.querySelector('.presets').addEventListener('click',e=>{
   const b=e.target.closest('.preset');if(!b)return;
@@ -4099,7 +4157,7 @@ Object.values(KITS).forEach(K=>{
     const b=e.target.closest('.drug');if(!b)return;
     K.st.drug=b.dataset.id;
     E(K,'Drugs').querySelectorAll('.drug').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.id===b.dataset.id)));
-    render();
+    render();setTimeout(()=>scrollToEl(E(K,'Result')),30);
   });
   E(K,'Result').addEventListener('click',e=>{
     if(e.target.dataset&&e.target.dataset.link){
