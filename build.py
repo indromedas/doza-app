@@ -19,6 +19,14 @@ if OUTER.exists() and (not SRC.exists() or OUTER.stat().st_mtime > SRC.stat().st
     print("исходник обновлён из", OUTER.name)
 
 src = SRC.read_text(encoding="utf-8")
+
+# Номер версии в калькуляторе (APP_VER) должен совпадать с кэшем в sw.js (doza-vN),
+# иначе сообщение «Что нового» и обновление на телефонах разойдутся.
+import re as _re
+_app = _re.search(r"const APP_VER=(\d+);", src)
+_sw = _re.search(r"const VERSION = 'doza-v(\d+)';", (HERE / "sw.js").read_text(encoding="utf-8"))
+if _app and _sw and _app.group(1) != _sw.group(1):
+    raise SystemExit(f"Версии не совпадают: APP_VER={_app.group(1)} в исходнике, doza-v{_sw.group(1)} в sw.js. Поднимите обе.")
 cut = src.index("</style>") + len("</style>")
 head_part, body_part = src[:cut], src[cut:]
 lines = []

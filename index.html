@@ -267,6 +267,23 @@ footer p{margin:0}
 .terms{border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);padding:12px 16px;margin-top:6px}
 .terms summary{cursor:pointer;font-weight:600;color:var(--ink);font-size:14px}
 .terms-body{display:grid;gap:8px;margin-top:10px;line-height:1.55}
+.an{align-items:flex-start;justify-content:space-between;background:var(--accent-soft);border-color:color-mix(in srgb, var(--accent) 30%, transparent)}
+.an b{color:var(--accent)}
+.an{flex-wrap:wrap}
+.an .an-t{display:grid;gap:4px;flex:1 1 240px}
+.an ul{margin:4px 0 0;padding-left:18px;display:grid;gap:3px}
+.mine-tg{margin:-4px 0 12px;font-size:13.5px}
+#printArea{display:none}
+@media print{
+  html,body{background:#fff!important}
+  body>*:not(#printArea){display:none!important}
+  #printArea{display:block!important;color:#000;font:11pt/1.45 var(--font-ui)}
+  #printArea *{color:#000!important;background:transparent!important;box-shadow:none!important;border-color:#999!important}
+  #printArea .pr-head{display:flex;justify-content:space-between;border-bottom:1px solid #000;padding-bottom:6px;margin-bottom:12px}
+  #printArea .pr-foot{margin-top:14px;font-size:9pt}
+  #printArea .figs{grid-template-columns:1.25fr 1fr 1fr!important}
+  @page{margin:14mm}
+}
 .terms .ver{font:12px var(--font-num);color:var(--muted)}
 footer b{color:var(--ink);font-weight:600}
 </style>
@@ -289,12 +306,14 @@ footer b{color:var(--ink);font-weight:600}
 <div class="wrap">
   <div class="notice" role="note"><b>Важно</b><span>Это справочный расчёт по инструкциям из Регистра лекарственных средств России (rlsnet.ru). Он не заменяет назначение врача и не учитывает аллергии и лекарственные взаимодействия. Перед приёмом сверьтесь с инструкцией к вашей упаковке: у разных производителей дозировки могут отличаться.</span></div>
 
+  <div class="notice an" id="appNotice" role="status" hidden></div>
+
   <nav class="tabs" role="tablist" aria-label="Разделы калькулятора">
     <button type="button" role="tab" id="tabMain" data-tab="main" aria-selected="true" aria-label="Амбулаторные формы"><span class="tab-full">Амбулаторные формы</span><span class="tab-short">Амбул.<br>формы</span><span class="cnt" id="mainCnt">33</span></button>
     <button type="button" role="tab" id="tabCeap" data-tab="ceap" aria-selected="false">CEAP</button>
     <button type="button" role="tab" id="tabSclero" data-tab="sclero" aria-selected="false" aria-label="Склеротерапия"><span class="tab-full">Склеротерапия</span><span class="tab-short">Склеро-<br>терапия</span></button>
     <button type="button" role="tab" id="tabSmp" data-tab="smp" aria-selected="false" aria-label="СМП · укладка 1165н"><span class="tab-full">СМП · укладка 1165н</span><span class="tab-short">СМП</span><span class="cnt" id="smpCnt">85</span></button>
-    <button type="button" role="tab" id="tabAnest" data-tab="anest" aria-selected="false" aria-label="Анестезиология"><span class="tab-full">Анестезиология</span><span class="tab-short">Анестези-<br>ология</span><span class="cnt" id="anestCnt">12</span></button>
+    <button type="button" role="tab" id="tabAnest" data-tab="anest" aria-selected="false" aria-label="Анестезиология и реанимация"><span class="tab-full">АиР</span><span class="tab-short">АиР</span><span class="cnt" id="anestCnt">12</span></button>
     <button type="button" role="tab" id="tabAbx" data-tab="abx" aria-selected="false" aria-label="Антибиотики в/в"><span class="tab-full">Антибиотики в/в</span><span class="tab-short">Антибио-<br>тики в/в</span><span class="cnt" id="abxCnt">9</span></button>
     <button type="button" role="tab" id="tabCard" data-tab="card" aria-selected="false" aria-label="Экстренная карточка"><span class="tab-full">Экстренная карточка</span><span class="tab-short">Экстр.<br>карточка</span></button>
     <button type="button" role="tab" id="tabScales" data-tab="scales" aria-selected="false">Шкалы</button>  </nav>
@@ -391,6 +410,7 @@ footer b{color:var(--ink);font-weight:600}
           <div class="hist-list" id="kitEntries"></div><span id="kitNotice" role="status"></span>
         </details>
         <div class="inbox search"><input id="smpQ" type="search" autocomplete="off" placeholder="Препарат: эпинефрин, амиодарон, налоксон…" aria-label="Поиск в укладке"></div>
+        <label class="check mine-tg"><input type="checkbox" data-mine="smp"><span>Только мой набор</span></label>
         <div class="dgroups" id="smpDrugs"></div>
         <div class="opts">
           <div class="field"><span class="lbl" id="smpFormLbl">Форма и концентрация</span><div class="chips" id="smpForms" role="radiogroup" aria-labelledby="smpFormLbl"></div></div>
@@ -401,8 +421,9 @@ footer b{color:var(--ink);font-weight:600}
      </div>
      <div class="work-pane" id="paneAnest" hidden>
       <div class="panel" aria-labelledby="anestH">
-        <div class="ph"><h2 id="anestH">Анестезиология</h2><span>Индукция, миорелаксация, периоперационные препараты</span></div>
+        <div class="ph"><h2 id="anestH">АиР</h2><span>Анестезиология и реанимация: препараты, инфузия, ожоги, новорождённые</span></div>
         <div class="inbox search"><input id="anestQ" type="search" autocomplete="off" placeholder="Препарат: пропофол, рокуроний, сугаммадекс…" aria-label="Поиск в анестезиологии"></div>
+        <label class="check mine-tg"><input type="checkbox" data-mine="anest"><span>Только мой набор</span></label>
         <div class="dgroups" id="anestDrugs"></div>
         <div class="opts">
           <div class="field"><span class="lbl" id="anestFormLbl">Форма и концентрация</span><div class="chips" id="anestForms" role="radiogroup" aria-labelledby="anestFormLbl"></div></div>
@@ -410,11 +431,13 @@ footer b{color:var(--ink);font-weight:600}
         </div>
       </div>
       <div class="panel result" id="anestResult" aria-live="polite"></div>
+      <div class="work-pane" id="airCalc"></div>
      </div>
      <div class="work-pane" id="paneAbx" hidden>
       <div class="panel" aria-labelledby="abxH">
         <div class="ph"><h2 id="abxH">Антибиотики в/в</h2><span>Стационар; доза с учётом функции почек</span></div>
         <div class="inbox search"><input id="abxQ" type="search" autocomplete="off" placeholder="Препарат: цефазолин, меропенем, ванкомицин…" aria-label="Поиск антибиотика"></div>
+        <label class="check mine-tg"><input type="checkbox" data-mine="abx"><span>Только мой набор</span></label>
         <div class="dgroups" id="abxDrugs"></div>
         <div class="opts">
           <div class="field"><span class="lbl" id="abxFormLbl">Форма</span><div class="chips" id="abxForms" role="radiogroup" aria-labelledby="abxFormLbl"></div></div>
@@ -439,6 +462,7 @@ footer b{color:var(--ink);font-weight:600}
       <div class="panel" aria-labelledby="drugH">
         <div class="ph"><h2 id="drugH">Препарат</h2><span><span class="rxtag">Rx</span> — по рецепту</span></div>
         <div class="inbox search"><input id="drugQ" type="search" autocomplete="off" placeholder="Название или бренд: Нурофен, Зиртек, Смекта…" aria-label="Поиск препарата"></div>
+        <label class="check mine-tg"><input type="checkbox" data-mine="main"><span>Только мой набор</span></label>
         <div class="dgroups" id="drugs"></div>
         <div class="opts">
           <div class="field">
@@ -461,7 +485,7 @@ footer b{color:var(--ink);font-weight:600}
   <footer>
     <p><b>Источники.</b> Инструкции по медицинскому применению из Регистра лекарственных средств России (rlsnet.ru), сверено в ноябре 2026 года. В карточке каждого препарата есть ссылка на страницу РЛС. Если в РЛС для препарата нет схемы дозирования, в карточке это отмечено.</p>
     <p><b>Вкладка СМП.</b> Состав — укладка общепрофильная по приказу Минздрава России от 28.10.2020 № 1165н. Дозы — из РЛС; где в РЛС схемы нет, они взяты из инструкции производителя или клинических рекомендаций, и в карточке это отмечено. Концентрации ампул — стандартные российские формы: сверяйте с ампулой в руках.</p>
-    <p><b>Вкладка «Анестезиология».</b> Только для врача анестезиолога-реаниматолога при возможности ИВЛ и мониторинга. Дозы — РЛС и инструкции препаратов; рокуроний при ожирении считается по идеальной массе, сугаммадекс — по фактической.</p>
+    <p><b>Вкладка «АиР».</b> Только для врача анестезиолога-реаниматолога при возможности ИВЛ и мониторинга. Дозы — РЛС и инструкции препаратов; рокуроний при ожирении считается по идеальной массе, сугаммадекс — по фактической.</p>
     <p><b>Экстренная карточка.</b> Размеры оборудования, энергия разряда и дозы для реанимации по массе — по рекомендациям ERC 2021 и Национального совета по реанимации; нормы и ориентир массы — APLS.</p>
     <p><b>Антибиотики в/в и шкалы.</b> Дозы антибиотиков — РЛС и инструкции производителей с коррекцией по клиренсу креатинина. Шкалы: Глазго, qSOFA (Sepsis-3), NEWS2 (Royal College of Physicians). Избранное хранится только на этом устройстве.</p>
     <p><b>Склеротерапия.</b> Дозы и пределы — инструкции Этоксисклерола и Фибро-Вейна в РЛС; соотношение пены 1 + 4 (метод Тессари) — Европейские рекомендации по склеротерапии.</p>
@@ -477,11 +501,12 @@ footer b{color:var(--ink);font-weight:600}
         <p><b>Ваши данные.</b> Возраст, пол, вес, рост и креатинин обрабатываются только на вашем устройстве и никуда не передаются. Избранное и последние 10 расчётов хранятся в памяти браузера на этом устройстве; историю можно очистить кнопкой под данными пациента. Регистрации, аналитики и рекламы нет.</p>
         <p><b>Нашли ошибку в дозе?</b> Сообщите — это важнее всего: <a href="https://github.com/indromedas/doza-app/issues" target="_blank" rel="noopener">github.com/indromedas/doza-app/issues</a>.</p>
         <p><b>Права.</b> © 2026 indromedas. Использование для личной профессиональной работы — свободно. Копирование, изменение и распространение, в том числе коммерческое, — только с разрешения автора.</p>
-        <p class="ver">Версия 7 · данные сверены в ноябре 2026 года</p>
+        <p class="ver">Версия <span id="verNum">15</span> · данные сверены в ноябре 2026 года · <button type="button" class="copy" id="showChanges">Что нового</button></p>
       </div>
     </details>
   </footer>
 </div>
+<div id="printArea"></div>
 
 <script>
 (function(){
@@ -2195,6 +2220,7 @@ function filterDrugs(){
     g.hidden=!vis;if(vis)any=true;
   });
   $('#nores').hidden=any;
+  if(!mineFilter($('#drugs'),'main',$('#nores')))$('#nores').textContent='Такого препарата пока нет в калькуляторе.';
 }
 
 function syncOptions(d,formId){
@@ -2221,7 +2247,7 @@ let curTab='main';
 function render(){
   const p=readPatient();
   renderMetrics(p);
-  if(KITS[curTab])renderKit(KITS[curTab],p);else if(curTab==='card')renderCard(p);else if(curTab==='scales')renderScales(p);else if(curTab==='ceap')renderCeap();else if(curTab==='sclero')renderSclero(p);else renderMain(p);
+  if(KITS[curTab]){renderKit(KITS[curTab],p);if(curTab==='anest')renderAir(p);}else if(curTab==='card')renderCard(p);else if(curTab==='scales')renderScales(p);else if(curTab==='ceap')renderCeap();else if(curTab==='sclero')renderSclero(p);else renderMain(p);
   lastP=p;scheduleHist();
 }
 function renderMain(p){
@@ -3095,6 +3121,7 @@ function filterKit(K){
   const q=E(K,'Q').value.trim().toLowerCase().replace(/ё/g,'е');let any=false;
   E(K,'Drugs').querySelectorAll('.dgroup').forEach(g=>{let v=0;g.querySelectorAll('.drug').forEach(b=>{const ok=!q||b.dataset.s.replace(/ё/g,'е').includes(q);b.hidden=!ok;if(ok)v++;});g.hidden=!v;if(v)any=true;});
   E(K,'Nores').hidden=any;
+  if(!mineFilter(E(K,'Drugs'),K.key,E(K,'Nores')))E(K,'Nores').textContent='Такого препарата нет в этой вкладке.';
 }
 function evalSpec(s,p,r,u,f){
   let lo,hi;
@@ -3331,16 +3358,16 @@ function favHTML(t,list){
   const cur=t==='main'?state.drug:(KITS[t]&&KITS[t].st.drug);
   const items=list.filter(d=>isFav(t,d.id));
   if(!items.length)return'';
-  return `<div class="dgroup fav-group" data-g="fav"><div class="gname">★ Избранное</div><div class="drow">${items.map(d=>`<button type="button" class="drug" data-id="${d.id}" data-s="${(d.name+' '+(d.brands||'')).toLowerCase()}" aria-pressed="${d.id===cur}"><span class="dn">${d.name}</span><small>${d.brands||(d.forms&&d.forms[0].label)||''}</small></button>`).join('')}</div></div>`;
+  return `<div class="dgroup fav-group" data-g="fav"><div class="gname">★ Мой набор</div><div class="drow">${items.map(d=>`<button type="button" class="drug" data-id="${d.id}" data-s="${(d.name+' '+(d.brands||'')).toLowerCase()}" aria-pressed="${d.id===cur}"><span class="dn">${d.name}</span><small>${d.brands||(d.forms&&d.forms[0].label)||''}</small></button>`).join('')}</div></div>`;
 }
-const favBtn=(t,id)=>`<button type="button" class="fav" data-fav="${t}:${id}" aria-pressed="${isFav(t,id)}" title="${isFav(t,id)?'Убрать из избранного':'Добавить в избранное'}">${isFav(t,id)?'★ В избранном':'☆ В избранное'}</button>`;
+const favBtn=(t,id)=>`<button type="button" class="fav" data-fav="${t}:${id}" aria-pressed="${isFav(t,id)}" title="${isFav(t,id)?'Убрать из моего набора':'Добавить в мой набор'}">${isFav(t,id)?'★ В моём наборе':'☆ В мой набор'}</button>`;
 const APP_URL='https://indromedas.github.io/doza-app/';
-const tgShare=txt=>`<a class="copy" data-tgshare href="https://t.me/share/url?url=${encodeURIComponent(APP_URL)}&text=${encodeURIComponent(String(txt).replace(/ /g,' '))}" target="_blank" rel="noopener">В Telegram</a>`;
+const tgShare=txt=>`<a class="copy" data-tgshare data-text="${esc(String(txt).replace(/ /g,' '))}" href="https://t.me/share/url?url=${encodeURIComponent(APP_URL)}&text=${encodeURIComponent(String(txt).replace(/ /g,' '))}" target="_blank" rel="noopener">В Telegram</a><button type="button" class="copy" data-print>Печать</button>`;
 document.addEventListener('click',e=>{
   const f=e.target.closest('[data-fav]');
   if(f){const [t,id]=f.dataset.fav.split(':');toggleFav(t,id);renderDrugs();Object.values(KITS).forEach(renderKitDrugs);filterDrugs();Object.values(KITS).forEach(K=>{if(E(K,'Q'))filterKit(K);});render();return;}
   const a=e.target.closest('[data-tgshare]');
-  if(a){const tg=window.Telegram&&window.Telegram.WebApp;if(tg&&tg.platform&&tg.platform!=='unknown'&&tg.openTelegramLink){e.preventDefault();try{tg.openTelegramLink(a.href);}catch(err){window.open(a.href,'_blank');}}}
+  if(a){a.href='https://t.me/share/url?url='+encodeURIComponent(shareURL(shareCode()))+'&text='+encodeURIComponent(a.dataset.text||'');const tg=window.Telegram&&window.Telegram.WebApp;if(tg&&tg.platform&&tg.platform!=='unknown'&&tg.openTelegramLink){e.preventDefault();try{tg.openTelegramLink(a.href);}catch(err){window.open(a.href,'_blank');}}}
 });
 
 /* ================= Шкалы ================= */
@@ -3402,6 +3429,103 @@ function renderScales(p){
   computeScales();
 }
 document.addEventListener('input',e=>{if(e.target.closest&&e.target.closest('#scalesForm'))computeScales();});
+/* ================= АиР: инфузия, ожоги, новорождённые ================= */
+const APGAR=[
+  ['apHR','ЧСС',[[0,'Нет'],[1,'Менее 100 в минуту'],[2,'100 в минуту и более']]],
+  ['apRes','Дыхание',[[0,'Нет'],[1,'Нерегулярное, слабый крик'],[2,'Регулярное, громкий крик']]],
+  ['apTone','Мышечный тонус',[[0,'Вялый'],[1,'Некоторое сгибание конечностей'],[2,'Активные движения']]],
+  ['apRefl','Рефлекторная возбудимость',[[0,'Нет реакции'],[1,'Гримаса'],[2,'Крик, кашель, чихание']]],
+  ['apCol','Цвет кожи',[[0,'Бледность или генерализованный цианоз'],[1,'Тело розовое, конечности синюшные'],[2,'Полностью розовая']]]
+];
+const SILV=[
+  ['svChest','Движения грудной клетки',[[0,'Синхронны с животом'],[1,'Отставание или асимметрия на вдохе'],[2,'Парадоксальное дыхание']]],
+  ['svIcs','Втяжение межрёберий',[[0,'Нет'],[1,'Едва заметное'],[2,'Выраженное']]],
+  ['svXip','Втяжение мечевидного отростка',[[0,'Нет'],[1,'Небольшое'],[2,'Выраженное']]],
+  ['svChin','Положение подбородка',[[0,'Неподвижен'],[1,'Опускается на вдохе, рот закрыт'],[2,'Опускается на вдохе, рот открыт']]],
+  ['svGrunt','Экспираторные шумы',[[0,'Нет'],[1,'Слышны при аускультации'],[2,'Слышны на расстоянии']]]
+];
+const BURN_REG=[['bHead','Голова и шея'],['bArmR','Правая рука'],['bArmL','Левая рука'],['bFront','Грудь и живот'],['bBack','Спина и ягодицы'],['bLegR','Правая нога'],['bLegL','Левая нога'],['bPer','Промежность']];
+const BURN_FR=[[0,'Нет'],[0.25,'¼ области'],[0.5,'½ области'],[0.75,'¾ области'],[1,'Вся область']];
+// % поверхности тела по областям: с 15 лет — правило девяток, младше — таблица Лунда–Браудера
+function burnMap(ageY){
+  if(ageY>=15)return{t:'правило девяток',v:[9,9,9,18,18,18,18,1]};
+  const [head,thigh,shin]=ageY<1?[19,5.5,5]:ageY<5?[17,6.5,5]:ageY<10?[13,8,5.5]:[11,8.5,6];
+  const leg=thigh+shin+3.5;
+  return{t:'таблица Лунда–Браудера',v:[head+2,9.5,9.5,13,18,leg,leg,1]};
+}
+let airBuilt=false;
+const scoreSel=(id,opts)=>`<div class="inbox"><select id="${id}">${opts.map(o=>`<option value="${o[0]}">${o[0]} — ${o[1]}</option>`).join('')}</select></div>`;
+const scoreRows=list=>list.map(([id,name,opts])=>`<div class="field"><label class="lbl" for="${id}">${name}</label>${scoreSel(id,opts.slice().reverse())}</div>`).join('');
+function buildAir(){
+  $('#airCalc').innerHTML=`
+  <div class="panel" id="airInf"><div class="ph"><h2>Скорость инфузии</h2><span>мл/ч и капли в минуту</span></div>
+    <div class="fields"><div class="two"><div class="field"><label class="lbl" for="ifVol">Объём</label>${numHTML('ifVol','мл','500')}</div>
+      <div class="field"><label class="lbl" for="ifDrop">Система</label><div class="inbox"><select id="ifDrop"><option value="20">Обычная — 20 капель/мл</option><option value="15">15 капель/мл</option><option value="60">Микрокапельная — 60 капель/мл</option></select></div></div></div>
+      <div class="two"><div class="field"><label class="lbl" for="ifH">Время, часы</label>${numHTML('ifH','ч','2')}</div><div class="field"><label class="lbl" for="ifM">и минуты</label>${numHTML('ifM','мин','0')}</div></div></div>
+    <div class="figs" style="margin-top:14px" id="ifOut"></div></div>
+  <div class="panel" id="airBurn"><div class="ph"><h2>Ожоги</h2><span>площадь и инфузия по Паркленду</span></div>
+    <span class="hint">Учитывайте только ожоги II–IV степени (I степень не считается). Ладонь пациента с пальцами ≈ 1% поверхности тела.</span>
+    <div class="fields" style="margin-top:10px">${BURN_REG.map(([id,name])=>`<div class="field"><label class="lbl" for="${id}">${name} <span class="hint" id="${id}Pct"></span></label><div class="inbox"><select id="${id}">${BURN_FR.map(f=>`<option value="${f[0]}">${f[1]}</option>`).join('')}</select></div></div>`).join('')}
+      <div class="two"><div class="field"><label class="lbl" for="bExtra">Отдельные очаги</label>${numHTML('bExtra','%','','0')}</div><div class="field"><label class="lbl" for="bHrs">Прошло после ожога</label>${numHTML('bHrs','ч','0')}</div></div></div>
+    <div class="figs" style="margin-top:14px" id="bOut"></div><ul class="msgs" id="bMsgs"></ul></div>
+  <div class="panel" id="airApgar"><div class="ph"><h2>Шкала Апгар</h2><span>новорождённый на 1-й и 5-й минуте</span></div>
+    <div class="fields">${scoreRows(APGAR)}</div>
+    <div class="figs" style="margin-top:14px;grid-template-columns:1fr 2fr" id="apOut"></div></div>
+  <div class="panel" id="airSilv"><div class="ph"><h2>Шкала Сильвермана</h2><span>дыхательные расстройства у новорождённых</span></div>
+    <div class="fields">${scoreRows(SILV.map(([id,n,o])=>[id,n,o.slice().reverse()]))}</div>
+    <div class="figs" style="margin-top:14px;grid-template-columns:1fr 2fr" id="svOut"></div></div>
+  <div class="src"><div><span class="lbl">Источник</span>Площадь ожога — правило девяток (Уоллес) и таблица Лунда–Браудера; объём — формула Паркленда (Baxter), у детей 3 мл/кг/% по рекомендациям ABA. Шкала Апгар (1952), шкала Сильвермана–Андерсена (1956).</div><p>Объём инфузии при ожогах — стартовый ориентир. Дальше скорость подбирают по диурезу и гемодинамике.</p></div>`;
+  airBuilt=true;
+}
+const sumSel=list=>list.reduce((s,[id])=>s+(+$('#'+id).value||0),0);
+function computeAir(p){
+  // скорость инфузии
+  const vol=nv('ifVol'),df=+$('#ifDrop').value,min=(nv('ifH')||0)*60+(nv('ifM')||0);
+  if(vol>0&&min>0){
+    const mlh=vol/min*60,dpm=vol*df/min;
+    $('#ifOut').innerHTML=`<div class="fig main"><span class="lab">Скорость</span><span class="val">${fN(mlh)} <small>мл/ч</small></span><span class="sub">${fN(vol)} мл за ${min>=60?nf(Math.floor(min/60),0)+' ч ':''}${min%60?nf(min%60,0)+' мин':''}</span></div>
+      <div class="fig"><span class="lab">Капли</span><span class="val">${nf(Math.round(dpm),0)} <small>в минуту</small></span><span class="sub">${df} капель/мл</span></div>
+      <div class="fig"><span class="lab">Интервал</span><span class="val">${nf(60/dpm,1)} <small>с</small></span><span class="sub">между каплями</span></div>`;
+  }else $('#ifOut').innerHTML=`<div class="fig"><span class="lab">Скорость</span><span class="val txt">—</span><span class="sub ui">Укажите объём и время</span></div>`;
+
+  // ожоги
+  const age=p&&p.ok?p.ageY:18,map=burnMap(age);
+  BURN_REG.forEach(([id],i)=>{$('#'+id+'Pct').textContent=`· ${nf(map.v[i],1)}%`;});
+  let tbsa=BURN_REG.reduce((s,[id],i)=>s+(+$('#'+id).value)*map.v[i],0)+(Math.max(nv('bExtra')||0,0));
+  tbsa=Math.min(tbsa,100);
+  const msgs=[];let figs=`<div class="fig main"><span class="lab">Площадь ожога</span><span class="val">${nf(tbsa,1)} <small>%</small></span><span class="sub ui">${map.t}${p&&p.ok?'':' (взрослый — укажите возраст)'}</span></div>`;
+  if(!p||!p.ok){
+    figs+=`<div class="fig"><span class="lab">Инфузия</span><span class="val txt">—</span><span class="sub ui">Укажите возраст, пол и вес пациента</span></div>`;
+  }else if(tbsa>0){
+    const child=p.ageY<14,k=child?3:4,V=k*p.w*tbsa,hrs=Math.max(nv('bHrs')||0,0);
+    const diur=child&&p.w<30?1:0.5;
+    if(hrs>=24)msgs.push({lvl:'warn',t:'Прошло больше суток — формула Паркленда не применяется, инфузия по потребности и диурезу.'});
+    else{
+      const r2=V/2/16;
+      if(hrs<8){const r1=V/2/(8-hrs);figs+=`<div class="fig"><span class="lab">До 8-го часа</span><span class="val">${fN(r1)} <small>мл/ч</small></span><span class="sub">${fU(V/2,'мл')} за ${nf(8-hrs,1)} ч</span></div>`;}
+      else{figs+=`<div class="fig"><span class="lab">До 8-го часа</span><span class="val txt">прошло</span><span class="sub ui">дефицит восполнить по диурезу</span></div>`;msgs.push({lvl:'warn',t:'Первые 8 ч прошли — недовведённый объём восполняют по диурезу и гемодинамике.'});}
+      figs+=`<div class="fig"><span class="lab">Часы 8–24</span><span class="val">${fN(r2)} <small>мл/ч</small></span><span class="sub">${fU(V/2,'мл')} за 16 ч</span></div>`;
+      msgs.push({lvl:'info',t:`За первые сутки: ${k} мл × ${nf(p.w,1)} кг × ${nf(tbsa,1)}% = ${fU(V,'мл')} раствора Рингера лактата. Половина — за первые 8 ч от момента ожога, половина — за следующие 16 ч.`});
+    }
+    msgs.push({lvl:'info',t:`Цель диуреза — ${nf(diur,1)} мл/кг/ч, то есть около ${fU(diur*p.w,'мл')}/ч.`});
+    if(child&&p.w<30){const m=p.w<=10?4*p.w:p.w<=20?40+2*(p.w-10):60+(p.w-20);msgs.push({lvl:'info',t:`Масса < 30 кг: дополнительно поддерживающая инфузия с глюкозой ${fN(m)} мл/ч (4-2-1).`});}
+    if(tbsa<(child?10:20))msgs.push({lvl:'info',t:`Площадь < ${child?10:20}% — противошоковая инфузия по формуле обычно не нужна.`});
+    if(!child)msgs.push({lvl:'info',t:'По ABA 2018 у взрослых можно начинать с 2 мл/кг/% — меньше риск перегрузки жидкостью.'});
+    if(tbsa>=50)msgs.push({lvl:'warn',t:'Площадь ≥ 50% — высокий риск перегрузки жидкостью, тщательный контроль диуреза.'});
+  }
+  $('#bOut').innerHTML=figs;$('#bOut').style.gridTemplateColumns=figs.split('class="fig').length-1>2?'':'1fr 2fr';
+  $('#bMsgs').innerHTML=msgs.map(msgHTML).join('');$('#bMsgs').hidden=!msgs.length;
+
+  // Апгар
+  const ap=sumSel(APGAR),al=ap>=7?['ok','Норма']:ap>=4?['warn','Умеренная депрессия']:['stop','Тяжёлая депрессия'];
+  $('#apOut').innerHTML=`<div class="fig main"><span class="lab">Апгар</span><span class="val">${ap} <small>из 10</small></span><span class="sub">&nbsp;</span></div><div class="fig"><span class="lab">Оценка</span><span class="val txt"><span class="pill ${al[0]}">${al[1]}</span></span><span class="sub ui">7–10 — норма, 4–6 — умеренная, 0–3 — тяжёлая. Реанимацию не откладывают до оценки по Апгар.</span></div>`;
+  // Сильверман
+  const sv=sumSel(SILV),sl=sv===0?['ok','Нет дыхательных расстройств']:sv<=3?['ok','Лёгкие дыхательные расстройства']:sv<=6?['warn','Средней тяжести']:['stop','Тяжёлые дыхательные расстройства'];
+  $('#svOut').innerHTML=`<div class="fig main"><span class="lab">Сильверман</span><span class="val">${sv} <small>из 10</small></span><span class="sub">&nbsp;</span></div><div class="fig"><span class="lab">Оценка</span><span class="val txt"><span class="pill ${sl[0]}">${sl[1]}</span></span><span class="sub ui">Чем больше баллов, тем тяжелее: 1–3 лёгкие, 4–6 средние, 7–10 тяжёлые.</span></div>`;
+}
+function renderAir(p){if(!airBuilt)buildAir();computeAir(p);}
+['input','change'].forEach(t=>document.addEventListener(t,e=>{if(e.target.closest&&e.target.closest('#airCalc'))computeAir(lastP);}));
+
 document.addEventListener('change',e=>{if(e.target.closest&&e.target.closest('#scalesForm'))computeScales();});
 
 
@@ -3677,7 +3801,7 @@ function histCurrent(){
 }
 function saveHist(){const e=histCurrent();if(!e)return;HIST=HIST.filter(x=>x.key!==e.key);HIST.unshift(e);HIST=HIST.slice(0,10);try{localStorage.setItem(HIST_KEY,JSON.stringify(HIST));}catch(err){}renderHist();}
 function scheduleHist(){if(!userTouched)return;clearTimeout(histTimer);histTimer=setTimeout(saveHist,2500);}
-const TAB_NAMES={main:'Амбулаторные',smp:'СМП',anest:'Анестезиология',abx:'Антибиотики',sclero:'Склеротерапия'};
+const TAB_NAMES={main:'Амбулаторные',smp:'СМП',anest:'АиР',abx:'Антибиотики',sclero:'Склеротерапия'};
 function renderHist(){
   const box=$('#histList');if(!box)return;
   $('#histCnt').textContent=HIST.length;$('#histClear').hidden=!HIST.length;
@@ -3708,8 +3832,108 @@ document.addEventListener('click',e=>{
   if(e.target.id==='histClear'){HIST=[];try{localStorage.removeItem(HIST_KEY);}catch(err){}renderHist();}
 });
 
+/* ================= Ссылка на готовый расчёт ================= */
+// Прямая ссылка на Mini App (BotFather → /newapp), например 'https://t.me/имя_бота/app'.
+// Пока пусто — ссылка ведёт на сайт калькулятора, расчёт открывается так же.
+const BOT_APP='';
+function b64e(s){return btoa(unescape(encodeURIComponent(s))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
+function b64d(s){s=s.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';return decodeURIComponent(escape(atob(s)));}
+function shareCode(){
+  const e=histCurrent();if(!e)return null;
+  const p={};Object.entries(e.p).forEach(([k,v])=>{if(v!==''&&v!==false&&v!=null&&!(k==='cu'&&v==='umol'))p[k]=v;});
+  const o={t:e.tab,i:e.id,f:e.form,m:e.mode,r:e.reg,v:e.variant,s:e.sc,p};
+  Object.keys(o).forEach(k=>{if(o[k]==null)delete o[k];});
+  return b64e(JSON.stringify(o));
+}
+function shareURL(code){
+  if(!code)return APP_URL;
+  return BOT_APP&&code.length<=500?BOT_APP+'?startapp='+code:APP_URL+'?s='+code;
+}
+function openShared(code){
+  let o;try{o=JSON.parse(b64d(code));}catch(err){return false;}
+  if(!o||!TABS.includes(o.t))return false;
+  if(o.t==='main'&&!DRUGS.some(d=>d.id===o.i))return false;
+  if(KITS[o.t]&&![...KITS[o.t].list,...(o.t==='smp'?REANIM:[])].some(d=>d.id===o.i))return false;
+  const p=Object.assign({y:'',m:'',sex:'m',w:'',h:'',cr:'',cu:'umol',preg:'',liver:false},o.p||{});
+  try{restoreHist({tab:o.t,id:o.i,form:o.f,mode:o.m,reg:o.r,variant:o.v,sc:o.s,p});}catch(err){return false;}
+  showNotice('Открыт расчёт по ссылке','Проверьте данные пациента перед применением.');
+  return true;
+}
+function startCode(){
+  const q=new URLSearchParams(location.search);
+  return q.get('s')||q.get('tgWebAppStartParam')||null;
+}
+
+/* ================= Что нового ================= */
+// APP_VER должен совпадать с номером в sw.js (doza-vN) — build.py проверяет
+const APP_VER=15;
+const CHANGES=[
+  {v:15,items:['Вкладка «Анестезиология» теперь называется «АиР»: скорость инфузии в каплях, ожоги с инфузией по Паркленду, шкалы Апгар и Сильвермана.','Кнопка «В Telegram» отправляет ссылку на готовый расчёт — коллега откроет тот же препарат с теми же данными пациента.','Печать и PDF схемы с датой.','«Мой набор»: отметьте свои препараты ☆ и включите «Только мой набор».']},
+  {v:14,items:['Расчёт доз для всех антикоагулянтов и антиагрегантов с коррекцией по функции почек, массе и возрасту.']}
+];
+const VER_KEY='doza-ver';
+function showNotice(title,html,list){
+  const b=$('#appNotice');
+  b.innerHTML=`<div class="an-t"><b>${title}</b>${html?`<span>${html}</span>`:''}${list?`<ul>${list.map(x=>`<li>${x}</li>`).join('')}</ul>`:''}</div><button type="button" class="copy" id="appNoticeOk">Понятно</button>`;
+  b.hidden=false;
+}
+function showChanges(since){
+  const items=CHANGES.filter(c=>c.v>since).flatMap(c=>c.items);
+  if(items.length)showNotice(`Что нового в версии ${APP_VER}`,'',items);
+}
+document.addEventListener('click',e=>{
+  if(e.target.id==='appNoticeOk'){$('#appNotice').hidden=true;try{localStorage.setItem(VER_KEY,String(APP_VER));}catch(err){}}
+  if(e.target.id==='showChanges'){showChanges(APP_VER-3);window.scrollTo({top:0});}
+});
+function checkVersion(){
+  let seen=null,returning=false;
+  try{seen=+localStorage.getItem(VER_KEY)||null;returning=Object.keys(localStorage).some(k=>k.startsWith('doza-')||k.startsWith('rx-'));}catch(err){}
+  if(seen==null&&!returning){try{localStorage.setItem(VER_KEY,String(APP_VER));}catch(err){}return;}
+  if(seen==null)seen=APP_VER-1;
+  if(seen<APP_VER)showChanges(seen);
+}
+
+/* ================= Печать и PDF ================= */
+const RESULT_SEL={main:'#result',smp:'#smpResult',anest:'#anestResult',abx:'#abxResult',sclero:'#scResult',ceap:'#ceapResult'};
+const inTg=()=>{const tg=window.Telegram&&window.Telegram.WebApp;return !!(tg&&tg.platform&&tg.platform!=='unknown');};
+function doPrint(panel){
+  if(!panel)return;
+  if(inTg()){
+    // в Telegram печати нет — открываем тот же расчёт в браузере и печатаем там
+    const code=shareCode(),url=APP_URL+'?'+(code?'s='+code+'&':'')+'print=1';
+    try{window.Telegram.WebApp.openLink(url);}catch(err){window.open(url,'_blank');}
+    return;
+  }
+  const d=new Date(),pad=n=>String(n).padStart(2,'0');
+  const when=`${pad(d.getDate())}.${pad(d.getMonth()+1)}.${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  const area=$('#printArea');
+  area.innerHTML=`<div class="pr-head"><b>Калькулятор дозировок</b><span>${when}</span></div>${panel.innerHTML}<p class="pr-foot">Справочный расчёт. Не заменяет назначение врача и инструкцию по применению.</p>`;
+  area.querySelectorAll('button,[data-tgshare],.copied,.fav').forEach(x=>x.remove());
+  area.querySelectorAll('details').forEach(x=>x.open=true);
+  area.querySelectorAll('[id]').forEach(x=>x.removeAttribute('id'));
+  window.print();
+}
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-print]');if(b)doPrint(b.closest('.panel'));});
+
+/* ================= Мой набор ================= */
+const MINE_KEY='doza-mine';
+let MINE={};try{MINE=JSON.parse(localStorage.getItem(MINE_KEY)||'{}')||{};}catch(e){MINE={};}
+function mineFilter(box,key,nores){
+  const on=!!MINE[key],fav=box.querySelector('[data-g="fav"]');
+  if(!on)return null;
+  box.querySelectorAll('.dgroup').forEach(g=>{if(g.dataset.g!=='fav')g.hidden=true;});
+  if(nores){nores.hidden=!!(fav&&!fav.hidden);nores.textContent=fav?'В вашем наборе нет такого препарата.':'Мой набор пуст: откройте препарат и нажмите «☆ В мой набор».';}
+  return true;
+}
+document.addEventListener('change',e=>{
+  const t=e.target;if(!t.dataset||!t.dataset.mine)return;
+  MINE[t.dataset.mine]=t.checked;try{localStorage.setItem(MINE_KEY,JSON.stringify(MINE));}catch(err){}
+  if(t.dataset.mine==='main')filterDrugs();else filterKit(KITS[t.dataset.mine]);
+});
+function syncMine(){document.querySelectorAll('[data-mine]').forEach(c=>{c.checked=!!MINE[c.dataset.mine];});}
+
 /* ================= Поиск по всему калькулятору ================= */
-const TAB_LABEL={main:'Амбулаторные',ceap:'CEAP',sclero:'Склеротерапия',smp:'СМП',anest:'Анестезиология',abx:'Антибиотики в/в',card:'Экстренная карточка',scales:'Шкалы'};
+const TAB_LABEL={main:'Амбулаторные',ceap:'CEAP',sclero:'Склеротерапия',smp:'СМП',anest:'АиР',abx:'Антибиотики в/в',card:'Экстренная карточка',scales:'Шкалы'};
 let GIDX=null,gActive=0,gHits=[];
 const norm=s=>String(s||'').toLowerCase().replace(/ё/g,'е');
 function buildGIndex(){
@@ -3724,6 +3948,10 @@ function buildGIndex(){
   add({tab:'card',name:'Экстренная карточка',sub:'СЛР, интубационная трубка, разряд по массе',kw:'слр реанимация интубация трубка клинок ларингеальная маска дефибрилляция кардиоверсия нормы чсс ад'});
   add({tab:'scales',name:'Шкала комы Глазго',sub:'оценка уровня сознания',kw:'глазго gcs кома сознание шкала'});
   add({tab:'scales',name:'qSOFA',sub:'скрининг сепсиса',kw:'сепсис qsofa шкала'});
+  add({tab:'anest',anchor:'airInf',name:'Скорость инфузии',sub:'мл/ч и капли в минуту',kw:'капли капельница инфузия скорость мл/ч кап/мин аир'});
+  add({tab:'anest',anchor:'airBurn',name:'Ожоги',sub:'площадь ожога и инфузия по Паркленду',kw:'ожог паркленд девяток лунд браудер площадь аир'});
+  add({tab:'anest',anchor:'airApgar',name:'Шкала Апгар',sub:'оценка новорождённого',kw:'апгар apgar новорождённый роды аир'});
+  add({tab:'anest',anchor:'airSilv',name:'Шкала Сильвермана',sub:'дыхательные расстройства новорождённых',kw:'сильверман silverman рдс новорождённый аир'});
   add({tab:'scales',name:'NEWS2',sub:'раннее выявление ухудшения состояния',kw:'news ухудшение шкала'});
   return idx;
 }
@@ -3747,7 +3975,7 @@ function gGo(o){
   if(!o)return;
   ['drugQ','smpQ','anestQ','abxQ'].forEach(id=>{const el=$('#'+id);if(el)el.value='';});
   if(o.tab==='main'){state.drug=o.id;renderDrugs();}
-  else if(KITS[o.tab]){
+  else if(KITS[o.tab]&&o.id){
     const K=KITS[o.tab];
     if(o.tab==='smp'){const v=o.variant||'gen';$(v==='rean'?'#smpVarRean':'#smpVarGen').checked=true;if(K.variant!==v)setSmpVariant(v);}
     K.st.drug=o.id;K.st.built=null;renderKitDrugs(K);
@@ -3755,7 +3983,7 @@ function gGo(o){
   filterDrugs();Object.values(KITS).forEach(K=>{if(E(K,'Q'))filterKit(K);});
   $('#gq').value='';closeGSearch();$('#gq').blur();
   setTab(o.tab);
-  const t=document.getElementById({main:'result',smp:'smpResult',anest:'anestResult',abx:'abxResult',sclero:'scResult',ceap:'ceapForm',card:'cardResult',scales:'scalesForm'}[o.tab]);
+  const t=o.anchor?document.getElementById(o.anchor):document.getElementById({main:'result',smp:'smpResult',anest:'anestResult',abx:'abxResult',sclero:'scResult',ceap:'ceapForm',card:'cardResult',scales:'scalesForm'}[o.tab]);
   if(t&&t.scrollIntoView){try{t.scrollIntoView({block:'start',behavior:window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});}catch(e){}}
 }
 document.addEventListener('input',e=>{if(e.target.id==='gq')renderGSearch();});
@@ -3804,7 +4032,8 @@ function clearPatient(){
   lastCopy=scCopy=ceapCopy='';
   Object.assign(sc,initialSclero);
   $('#scalesForm').replaceChildren();
-  scalesBuilt=ceapBuilt=false;
+  scalesBuilt=ceapBuilt=airBuilt=false;
+  $('#airCalc').replaceChildren();
   for(const selector of ['#result','#smpResult','#abxResult','#anestResult','#scResult','#ceapResult','#ceapForm','#cardResult']){
     document.querySelector(selector)?.replaceChildren();
   }
@@ -3819,7 +4048,7 @@ document.addEventListener('input',e=>{
   const id=e.target.id;
   if(id==='drugQ'){filterDrugs();return;}
   if(id==='smpQ'||id==='anestQ'||id==='abxQ'){filterKit(KITS[id.slice(0,-1)]);return;}
-  if(e.target.closest('#scalesForm')||e.target.closest('#ceapForm'))return;
+  if(e.target.closest('#scalesForm')||e.target.closest('#ceapForm')||e.target.closest('#airCalc'))return;
   if(e.target.closest('.panel')&&!e.target.matches('[name=form],[name=mode],[name=smpForm],[name=smpReg],[name=anestForm],[name=anestReg],[name=abxForm],[name=abxReg],[name=smpVar]'))render();
 });
 document.addEventListener('change',e=>{
@@ -3878,9 +4107,26 @@ window.addEventListener('hashchange',()=>{const t=location.hash.slice(1)||'main'
 
 renderDrugs();
 Object.values(KITS).forEach(renderKitDrugs);
+syncMine();filterDrugs();Object.values(KITS).forEach(K=>{if(E(K,'Q'))filterKit(K);});
 renderHist();
 $('#mainCnt').textContent=DRUGS.length;
 {const t=location.hash.slice(1);if(TABS.includes(t)&&t!=='main')setTab(t);else render();}
+{
+  $('#verNum').textContent=APP_VER;
+  const q=new URLSearchParams(location.search),wantPrint=q.get('print')==='1';
+  let done=false;
+  const apply=c=>{
+    if(done||!c)return;
+    if(!openShared(c))return;
+    done=true;
+    if(q.get('s')){try{history.replaceState(null,'',location.pathname+location.hash);}catch(e){}}
+    if(wantPrint)setTimeout(()=>doPrint($(RESULT_SEL[curTab])),800);
+  };
+  apply(startCode());
+  const tgStart=()=>{const tg=window.Telegram&&window.Telegram.WebApp;if(tg&&tg.initDataUnsafe&&tg.initDataUnsafe.start_param)apply(tg.initDataUnsafe.start_param);};
+  if(window.Telegram&&window.Telegram.WebApp)tgStart();else{const sc=document.getElementById('tgScript');if(sc)sc.addEventListener('load',tgStart);}
+  if(!done)checkVersion();
+}
 })();
 </script>
 
