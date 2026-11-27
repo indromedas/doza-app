@@ -3879,7 +3879,7 @@ function showNotice(title,html,list){
 }
 function showChanges(since){
   const items=CHANGES.filter(c=>c.v>since).flatMap(c=>c.items);
-  if(items.length)showNotice(`Что нового в версии ${APP_VER}`,'',items);
+  if(items.length)showNotice('Что нового в калькуляторе','',items);
 }
 document.addEventListener('click',e=>{
   if(e.target.id==='appNoticeOk'){$('#appNotice').hidden=true;try{localStorage.setItem(VER_KEY,String(APP_VER));}catch(err){}}
@@ -3889,7 +3889,8 @@ function checkVersion(){
   let seen=null,returning=false;
   try{seen=+localStorage.getItem(VER_KEY)||null;returning=Object.keys(localStorage).some(k=>k.startsWith('doza-')||k.startsWith('rx-'));}catch(err){}
   if(seen==null&&!returning){try{localStorage.setItem(VER_KEY,String(APP_VER));}catch(err){}return;}
-  if(seen==null)seen=APP_VER-1;
+  // плашка появилась в версии 15: кто пришёл без отметки — видел максимум 14-ю
+  if(seen==null)seen=14;
   if(seen<APP_VER)showChanges(seen);
 }
 
