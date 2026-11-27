@@ -271,7 +271,8 @@ footer b{color:var(--ink);font-weight:600}
 
   <main class="layout">
     <aside class="panel" aria-labelledby="patH">
-      <div class="ph"><h2 id="patH">Пациент</h2><span>Поля заполнены примером</span></div>
+      <div class="ph"><h2 id="patH">Пациент</h2><button type="button" class="preset" id="newPatient">Новый пациент</button></div>
+      <details id="examples"><summary>Учебный пример</summary>
       <div class="presets" aria-label="Примеры пациентов">
         <button type="button" class="preset" data-p="0,9,f,8.5,71,">9 мес · 8,5 кг</button>
         <button type="button" class="preset" data-p="4,0,m,16,104,">4 года · 16 кг</button>
@@ -280,12 +281,13 @@ footer b{color:var(--ink);font-weight:600}
         <button type="button" class="preset" data-p="78,0,f,58,160,130">78 лет · креатинин 130</button>
       </div>
 
+      </details>
       <div class="fields">
         <div class="field" id="fAge">
           <span class="lbl" id="ageLbl">Возраст</span>
           <div class="two" role="group" aria-labelledby="ageLbl">
-            <div class="inbox"><input id="ageY" inputmode="numeric" autocomplete="off" value="4" aria-label="Полных лет"><span class="u">лет</span></div>
-            <div class="inbox"><input id="ageMo" inputmode="numeric" autocomplete="off" value="0" aria-label="Месяцев"><span class="u">мес</span></div>
+            <div class="inbox"><input id="ageY" inputmode="numeric" autocomplete="off" value="" aria-label="Полных лет"><span class="u">лет</span></div>
+            <div class="inbox"><input id="ageMo" inputmode="numeric" autocomplete="off" value="" aria-label="Месяцев"><span class="u">мес</span></div>
           </div>
           <span class="err" id="eAge"></span>
         </div>
@@ -293,7 +295,7 @@ footer b{color:var(--ink);font-weight:600}
         <div class="field">
           <span class="lbl" id="sexLbl">Пол</span>
           <div class="seg" role="radiogroup" aria-labelledby="sexLbl">
-            <input type="radio" name="sex" id="sexM" value="m" checked><label for="sexM">Мужской</label>
+            <input type="radio" name="sex" id="sexM" value="m"><label for="sexM">Мужской</label>
             <input type="radio" name="sex" id="sexF" value="f"><label for="sexF">Женский</label>
           </div>
         </div>
@@ -301,12 +303,12 @@ footer b{color:var(--ink);font-weight:600}
         <div class="two">
           <div class="field" id="fW">
             <label class="lbl" for="weight">Вес</label>
-            <div class="inbox"><input id="weight" inputmode="decimal" autocomplete="off" value="16"><span class="u">кг</span></div>
+            <div class="inbox"><input id="weight" inputmode="decimal" autocomplete="off" value=""><span class="u">кг</span></div>
             <span class="err" id="eW"></span>
           </div>
           <div class="field" id="fH">
             <label class="lbl" for="height">Рост</label>
-            <div class="inbox"><input id="height" inputmode="decimal" autocomplete="off" value="104"><span class="u">см</span></div>
+            <div class="inbox"><input id="height" inputmode="decimal" autocomplete="off" value=""><span class="u">см</span></div>
             <span class="err" id="eH"></span>
           </div>
         </div>
@@ -340,7 +342,7 @@ footer b{color:var(--ink);font-weight:600}
       </div>
 
       <div class="metrics" id="metrics" aria-live="polite"></div>
-      <details class="hist" id="histBox" open>
+      <details class="hist" id="histBox">
         <summary>Последние расчёты <span class="cnt" id="histCnt">0</span></summary>
         <div class="hist-list" id="histList"></div>
         <button type="button" class="copy" id="histClear" hidden>Очистить историю</button>
@@ -1559,10 +1561,11 @@ function setErr(fid,eid,msg){$('#'+eid).textContent=msg||'';$('#'+fid).classList
 
 function readPatient(){
   const y=val('ageY'),mo=val('ageMo'),w=val('weight'),h=val('height'),cr=val('creat');
-  const sex=$('#sexF').checked?'f':'m';
-  let ok=true,ae='',we='',he='',ce='';
+  const sex=document.querySelector('[name=sex]:checked')?.value;
+  let ok=!!sex,ae='',we='',he='',ce='';
   if(y==null&&mo==null){ae='Укажите возраст';ok=false;}
   else if(Number.isNaN(y)||Number.isNaN(mo)){ae='Возраст — числом';ok=false;}
+  else if(!Number.isInteger(y??0)||!Number.isInteger(mo??0)){ae='Введите годы и месяцы целыми числами';ok=false;}
   else if((y||0)<0||(y||0)>120||(mo||0)<0||(mo||0)>11){ae='Лет: 0–120, месяцев: 0–11';ok=false;}
   if(w==null){we='Укажите вес';ok=false;}
   else if(Number.isNaN(w)||w<0.5||w>350){we='От 0,5 до 350 кг';ok=false;}
@@ -1694,7 +1697,7 @@ function renderMain(p){
   const el=$('#result');
 
   if(!p.ok){
-    el.innerHTML=`<div class="empty"><h2>${d.name}</h2><p>Укажите возраст и вес пациента — здесь появятся разовая доза, кратность и суточный максимум.</p></div>`;
+    el.innerHTML=`<div class="empty"><h2>${d.name}</h2><p>Укажите возраст, пол и вес пациента — здесь появятся разовая доза, кратность и суточный максимум.</p></div>`;
     return;
   }
 
@@ -2448,7 +2451,7 @@ function vitalsRow(p){
 function lmaSize(w){const T=[[5,'1'],[10,'1,5'],[20,'2'],[30,'2,5'],[50,'3'],[70,'4'],[100,'5'],[Infinity,'6']];return T.find(x=>w<x[0]||(x[0]===Infinity))[1];}
 function renderCard(p){
   const el=$('#cardResult');
-  if(!p.ok){el.innerHTML='<div class="empty"><h2>Экстренная карточка</h2><p>Укажите возраст и вес пациента — здесь появятся размеры оборудования, энергия разряда и дозы для реанимации.</p></div>';return;}
+  if(!p.ok){el.innerHTML='<div class="empty"><h2>Экстренная карточка</h2><p>Укажите возраст, пол и вес пациента — здесь появятся размеры оборудования, энергия разряда и дозы для реанимации.</p></div>';return;}
   const w=p.w,y=p.ageY,child=y<18,who=`${ageText(p)} · ${p.sex==='m'?'муж.':'жен.'} · ${nf(w,1)} кг${p.h?` · ${nf(p.h,0)} см`:''}`;
   const row=(k,v,s,tot)=>`<div class="row${tot?' total':''}"><span class="k">${k}</span><span class="v">${v}</span><span class="s">${s||''}</span></div>`;
   const msgs=[];
@@ -2609,7 +2612,7 @@ function renderKit(K,p){
     el.innerHTML=head(null)+`<div class="res-body"><p class="info-text">${d.info}</p>${d.link?`<button type="button" class="linkbtn" id="${K.key}Link" data-link="${d.link}">Открыть расчёт во вкладке «Амбулаторные формы»</button>`:''}${srcHTML}</div>`;
     return;
   }
-  if(!p.ok){el.innerHTML=`<div class="empty"><h2>${d.name}</h2><p>Укажите возраст и вес пациента — здесь появятся доза, объём и способ введения.</p></div>`;return;}
+  if(!p.ok){el.innerHTML=`<div class="empty"><h2>${d.name}</h2><p>Укажите возраст, пол и вес пациента — здесь появятся доза, объём и способ введения.</p></div>`;return;}
   const r=smpCalc(d,f,reg,p);
   if(p.implausible)r.msgs.push({lvl:'warn',t:`ИМТ ${nf(p.bmi,1)} — похоже на ошибку ввода. Проверьте вес и рост.`});
   const stopped=r.msgs.some(m=>m.lvl==='stop');
@@ -2839,14 +2842,14 @@ function buildCeap(){
       <div class="field"><label class="lbl" for="ceapDate">Дата осмотра</label><div class="inbox"><input id="ceapDate" type="date" value="${todayISO()}"></div></div>
     </div>
     <div class="sub-h">C — клинический класс</div>
-    <div class="ceap-list">${CEAP_C.map(c=>`<label class="check ceap-check"><input type="checkbox" id="ceapC_${c[0]}" value="${c[0]}"${CEAP_EXAMPLE.c.includes(c[0])?' checked':''}><span><b>${c[1]}</b> — ${c[2]}</span></label>`).join('')}</div>
+    <div class="ceap-list">${CEAP_C.map(c=>`<label class="check ceap-check"><input type="checkbox" id="ceapC_${c[0]}" value="${c[0]}"><span><b>${c[1]}</b> — ${c[2]}</span></label>`).join('')}</div>
     <div class="field"><span class="lbl" id="ceapSymLbl">Симптомы</span><div class="seg" role="radiogroup" aria-labelledby="ceapSymLbl"><input type="radio" name="ceapSym" id="ceapSymS" value="s" checked><label for="ceapSymS">Есть (s)</label><input type="radio" name="ceapSym" id="ceapSymA" value="a"><label for="ceapSymA">Нет (a)</label></div>
       <span class="hint">Симптомы: боль, тяжесть, распирание, зуд, судороги, другие жалобы, связанные с венами.</span></div>
     <div class="sub-h">E — этиология</div>
-    <div class="ceap-list">${CEAP_E.map(e=>`<label class="check ceap-check"><input type="radio" name="ceapE" value="${e[0]}"${e[0]===CEAP_EXAMPLE.e?' checked':''}><span><b>${e[0]}</b> — ${e[1]}</span></label>`).join('')}</div>
+    <div class="ceap-list">${CEAP_E.map(e=>`<label class="check ceap-check"><input type="radio" name="ceapE" value="${e[0]}"><span><b>${e[0]}</b> — ${e[1]}</span></label>`).join('')}</div>
     <div class="sub-h">A и P — сегменты по данным УЗДС</div>
     <span class="hint">Для каждого поражённого сегмента выберите находку. A и P собираются автоматически.</span>
-    ${CEAP_SEG.map(g=>`<div class="ceap-grp"><div class="gname">${g.name} (A<sub>${g.sys}</sub>)</div>${g.items.map(it=>`<div class="ceap-seg"><code>${it[0]}</code><label for="ceapS_${it[0]}">${it[1]}</label><div class="inbox"><select id="ceapS_${it[0]}" data-sys="${g.sys}" data-code="${it[0]}">${CEAP_P.map(o=>`<option value="${o[0]}"${(CEAP_EXAMPLE.seg[it[0]]||'')===o[0]?' selected':''}>${o[1]}</option>`).join('')}</select></div></div>`).join('')}</div>`).join('')}
+    ${CEAP_SEG.map(g=>`<div class="ceap-grp"><div class="gname">${g.name} (A<sub>${g.sys}</sub>)</div>${g.items.map(it=>`<div class="ceap-seg"><code>${it[0]}</code><label for="ceapS_${it[0]}">${it[1]}</label><div class="inbox"><select id="ceapS_${it[0]}" data-sys="${g.sys}" data-code="${it[0]}">${CEAP_P.map(o=>`<option value="${o[0]}">${o[1]}</option>`).join('')}</select></div></div>`).join('')}</div>`).join('')}
     <div><button type="button" class="copy" id="ceapReset">Очистить форму</button></div>
   </div>`;
   ceapBuilt=true;
@@ -2943,7 +2946,8 @@ const SCL={
       {id:'large',label:'Варикозные вены диаметром 1 см и более',tech:'liq',rec:[3],def:3,injTxt:'0,5–1,0 мл на каждые 10 см вены, не более 1 мл в точку',vol:1,n:4}
     ]}
 };
-const sc={drug:'pol',ind:'ret',conc:1,vol:0.3,n:5,ratio:4,built:null};
+const initialSclero={drug:'pol',ind:'ret',conc:1,vol:0.3,n:5,ratio:4,built:null};
+const sc={...initialSclero};
 let scCopy='';
 const scD=()=>SCL[sc.drug];
 const scI=()=>scD().ind.find(x=>x.id===sc.ind)||scD().ind[0];
@@ -2977,7 +2981,7 @@ function renderSclero(p){
   const head=st=>`<div class="res-head"><div><div class="eyebrow">Флебология</div><h2>${D.name} ${pc(sc.conc)}${foam?' — пена':''}</h2><div class="brands">${I.label}</div>${who?`<div class="who">${who}</div>`:''}</div><div class="pills">${st?`<span class="pill ${st[0]}">${st[1]}</span>`:''}<span class="pill plain">${foam?'пенная':'жидкая форма'}</span></div></div>`;
   let maxFig,injFig,tableRows='',pctMax=0;
   if(sc.drug==='pol'){
-    if(!p.ok){el.innerHTML=head(null)+`<div class="res-body"><ul class="msgs">${msgHTML({lvl:'warn',t:'Укажите возраст и вес пациента: максимальная доза полидоканола считается по массе тела — 2 мг/кг в сутки.'})}</ul></div>`;scCopy='';return;}
+    if(!p.ok){el.innerHTML=head(null)+`<div class="res-body"><ul class="msgs">${msgHTML({lvl:'warn',t:'Укажите возраст, пол и вес пациента: максимальная доза полидоканола считается по массе тела — 2 мг/кг в сутки.'})}</ul></div>`;scCopy='';return;}
     const maxMg=2*p.w,maxLiq=maxMg/mgml;pctMax=Math.max(mg/maxMg,foam?foamTot/10:0);
     maxFig=`<div class="fig main"><span class="lab">Максимум за сутки</span><span class="val">${fN(maxMg)} <small>мг</small></span><span class="sub">= ${fN(maxLiq)} мл ${pc(sc.conc)} · 2 мг/кг${foam?' · пены не более 10 мл':''}</span></div>`;
     if(foam)injFig=`<div class="fig"><span class="lab">На одну инъекцию</span><span class="val">до ${nf(I.inj[1])} <small>мл пены</small></span><span class="sub ui">максимум ${nf(I.max)} мл${I.maxNote?' — '+I.maxNote.toLowerCase():''}</span></div>`;
@@ -3081,6 +3085,7 @@ function renderHist(){
     return `<button type="button" class="hist-item" data-hist="${i}"><span class="hi-t">${esc(e.title)}</span><span class="hi-x">${esc(e.text)}</span><span class="hi-m">${TAB_NAMES[e.tab]||''} · ${esc(e.pt)} · ${tm}${day}</span></button>`;}).join('');
 }
 function restoreHist(e){
+  clearPatient();
   const P=e.p;
   $('#ageY').value=P.y;$('#ageMo').value=P.m;$(P.sex==='f'?'#sexF':'#sexM').checked=true;$('#weight').value=P.w;$('#height').value=P.h;
   $('#creat').value=P.cr||'';$('#creatUnit').value=P.cu||'umol';$('#preg').value=P.preg||'';$('#liver').checked=!!P.liver;
@@ -3179,6 +3184,34 @@ function setTab(t){
   render();
 }
 
+function clearPatient(){
+  clearTimeout(histTimer);
+  userTouched=false;
+  for(const id of ['ageY','ageMo','weight','height','creat','preg']) $('#'+id).value='';
+  for(const id of ['sexM','sexF','liver']) $('#'+id).checked=false;
+  $('#creatUnit').value='umol';
+  $('#histBox').open=false;
+  $('#examples').open=false;
+  state.form={};
+  state.mode={};
+  state.built=null;
+  for(const kit of Object.values(KITS)){
+    Object.assign(kit.st,{form:{},reg:{},built:null,builtReg:null});
+    kit.copy='';
+  }
+  lastCopy=scCopy=ceapCopy='';
+  Object.assign(sc,initialSclero);
+  $('#scalesForm').replaceChildren();
+  scalesBuilt=ceapBuilt=false;
+  for(const selector of ['#result','#smpResult','#abxResult','#anestResult','#scResult','#ceapResult','#ceapForm','#cardResult']){
+    document.querySelector(selector)?.replaceChildren();
+  }
+}
+$('#newPatient').addEventListener('click',()=>{
+  clearPatient();
+  render();
+  $('#ageY').focus();
+});
 /* ---------- events ---------- */
 document.addEventListener('input',e=>{
   const id=e.target.id;
@@ -3203,6 +3236,7 @@ $('#drugs').addEventListener('click',e=>{
 });
 document.querySelector('.presets').addEventListener('click',e=>{
   const b=e.target.closest('.preset');if(!b)return;
+  clearPatient();
   const [y,m,s,w,h,cr]=b.dataset.p.split(',');
   $('#ageY').value=y;$('#ageMo').value=m;
   $(s==='f'?'#sexF':'#sexM').checked=true;
