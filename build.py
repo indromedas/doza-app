@@ -108,7 +108,13 @@ TAIL = r"""
   window.addEventListener('online',paint);window.addEventListener('offline',paint);
   if('serviceWorker' in navigator){
     window.addEventListener('load',function(){
-      navigator.serviceWorker.register('sw.js').then(function(){return navigator.serviceWorker.ready;}).then(function(){ready=true;paint();}).catch(function(){paint();});
+      // Вышла новая версия: новый сервис-воркер берёт страницу под контроль — перезагрузить один раз,
+      // если калькулятор открыт только что (чтобы не сбросить уже введённые данные)
+      var hadCtrl=!!navigator.serviceWorker.controller,t0=Date.now(),reloaded=false;
+      navigator.serviceWorker.addEventListener('controllerchange',function(){
+        if(hadCtrl&&!reloaded&&Date.now()-t0<20000){reloaded=true;location.reload();}
+      });
+      navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(function(){return navigator.serviceWorker.ready;}).then(function(){ready=true;paint();}).catch(function(){paint();});
     });
   }
   paint();

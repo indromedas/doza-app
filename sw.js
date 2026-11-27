@@ -1,13 +1,13 @@
 /* Офлайн-кэш калькулятора дозировок.
    При каждом обновлении калькулятора увеличивайте VERSION — старый кэш удалится. */
-const VERSION = 'doza-v15';
+const VERSION = 'doza-v16';
 const CORE = ['./', 'index.html', 'manifest.webmanifest', 'icon-180.png', 'icon-192.png', 'icon-512.png',
   'fonts/fonts.css', 'fonts/GolosText-cyrillic-0.woff2', 'fonts/GolosText-latin-1.woff2',
   'fonts/JetBrainsMono-cyrillic-2.woff2', 'fonts/JetBrainsMono-latin-3.woff2'];
 const EXT = /^https:\/\/telegram\.org\//;
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(VERSION).then(c => c.addAll(CORE)).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(VERSION).then(c => c.addAll(CORE.map(u => new Request(u, { cache: 'reload' })))).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', e => {
@@ -27,10 +27,11 @@ self.addEventListener('fetch', e => {
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
 
-  // Страница: сначала сеть (чтобы приходили обновления), без сети — сохранённая копия
+  // Страница: сначала сеть (чтобы приходили обновления), без сети — сохранённая копия.
+  // no-cache: сверяться с сервером, а не брать страницу из HTTP-кэша браузера (GitHub Pages держит её 10 минут)
   if (req.mode === 'navigate' && url.origin === location.origin) {
     e.respondWith(
-      withTimeout(fetch(req), 4000)
+      withTimeout(fetch(req.url, { cache: 'no-cache', credentials: 'same-origin' }), 4000)
         .then(r => { const copy = r.clone(); caches.open(VERSION).then(c => c.put('index.html', copy)); return r; })
         .catch(() => caches.match('index.html').then(r => r || caches.match('./')))
     );
