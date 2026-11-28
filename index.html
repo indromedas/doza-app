@@ -290,6 +290,31 @@ footer p{margin:0}
 @media (min-width:881px){.to-list{display:none}}
 .an li b{color:var(--ink)}
 .an .linkbtn{margin-top:6px}
+/* компактный режим: выбранный препарат вместо списка */
+.picked-bar{display:none}
+.panel.picked .inbox.search,.panel.picked .mine-tg,.panel.picked .dgroups,.panel.picked #smpVarSeg,.panel.picked #myKit{display:none}
+.panel.picked .picked-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 12px;margin-bottom:14px;border:1px solid var(--line);border-radius:8px;background:var(--sunk)}
+.picked-bar .pb-l{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.picked-bar .pb-n{font-size:16px;flex:1 1 auto;min-width:0}
+/* данные пациента одной строкой на телефоне */
+.pat-sum{display:none}
+@media (max-width:880px){
+  aside.panel.pat-collapsed>:not(.ph):not(.pat-sum){display:none}
+  aside.panel.pat-collapsed>.ph{margin-bottom:10px}
+  aside.panel.pat-collapsed .pat-sum{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .pat-sum span{flex:1 1 auto;min-width:0;font:14px/1.4 var(--font-num)}
+}
+/* короткое «Важно» */
+.notice .n-body{display:grid;gap:4px}
+.notice details summary{cursor:pointer;color:var(--accent);font-size:13px;width:max-content}
+.notice details p{margin:4px 0 0}
+/* компактная шапка на телефоне */
+@media (max-width:720px){
+  .top .wrap{padding-block:10px;gap:10px}
+  .rx{width:34px;height:34px;font-size:14px;border-radius:7px}
+  h1{font-size:19px}
+  .top p{display:none}
+}
 .terms .ver{font:12px var(--font-num);color:var(--muted)}
 footer b{color:var(--ink);font-weight:600}
 </style>
@@ -310,7 +335,7 @@ footer b{color:var(--ink);font-weight:600}
 </header>
 
 <div class="wrap">
-  <div class="notice" role="note"><b>Важно</b><span>Это справочный расчёт по инструкциям из Регистра лекарственных средств России (rlsnet.ru). Он не заменяет назначение врача и не учитывает аллергии и лекарственные взаимодействия. Перед приёмом сверьтесь с инструкцией к вашей упаковке: у разных производителей дозировки могут отличаться.</span></div>
+  <div class="notice" role="note"><b>Важно</b><div class="n-body"><span>Справочный расчёт, не заменяет назначение врача. Перед приёмом сверьтесь с инструкцией к вашей упаковке.</span><details><summary>Подробнее</summary><p>Расчёт выполнен по инструкциям из Регистра лекарственных средств России (rlsnet.ru). Он не учитывает аллергии и лекарственные взаимодействия. У разных производителей дозировки могут отличаться.</p></details></div></div>
 
   <div class="notice an" id="appNotice" role="status" hidden></div>
 
@@ -410,7 +435,7 @@ footer b{color:var(--ink);font-weight:600}
      <div class="work-pane" id="paneSmp" hidden>
       <div class="panel" aria-labelledby="smpH">
         <div class="ph"><h2 id="smpH">Укладка общепрофильная СМП</h2><span>Состав — приказ Минздрава России № 1165н</span></div>
-        <div class="seg inline" role="radiogroup" aria-label="Вид укладки" style="margin-bottom:14px"><input type="radio" name="smpVar" id="smpVarGen" value="gen" checked><label for="smpVarGen">Общепрофильная</label><input type="radio" name="smpVar" id="smpVarRean" value="rean"><label for="smpVarRean">Реанимационная</label></div>
+        <div class="seg inline" id="smpVarSeg" role="radiogroup" aria-label="Вид укладки" style="margin-bottom:14px"><input type="radio" name="smpVar" id="smpVarGen" value="gen" checked><label for="smpVarGen">Общепрофильная</label><input type="radio" name="smpVar" id="smpVarRean" value="rean"><label for="smpVarRean">Реанимационная</label></div>
         <details class="hist" id="myKit"><summary>Моя укладка</summary>
           <p class="hint">Выберите препарат и форму выпуска в каталоге СМП, затем сохраните их здесь.</p>
           <button type="button" class="copy" id="kitSave"></button>
@@ -508,7 +533,7 @@ footer b{color:var(--ink);font-weight:600}
         <p><b>Ваши данные.</b> Возраст, пол, вес, рост и креатинин обрабатываются только на вашем устройстве и никуда не передаются. Избранное и последние 10 расчётов хранятся в памяти браузера на этом устройстве; историю можно очистить кнопкой под данными пациента. Регистрации, аналитики и рекламы нет.</p>
         <p><b>Нашли ошибку в дозе?</b> Сообщите — это важнее всего: <a href="https://github.com/indromedas/doza-app/issues" target="_blank" rel="noopener">github.com/indromedas/doza-app/issues</a>.</p>
         <p><b>Права.</b> © 2026 indromedas. Использование для личной профессиональной работы — свободно. Копирование, изменение и распространение, в том числе коммерческое, — только с разрешения автора.</p>
-        <p class="ver">Версия <span id="verNum">18</span> · данные сверены в ноябре 2026 года · <button type="button" class="copy" id="showChanges">Что нового</button></p>
+        <p class="ver">Версия <span id="verNum">19</span> · данные сверены в ноябре 2026 года · <button type="button" class="copy" id="showChanges">Что нового</button></p>
       </div>
     </details>
   </footer>
@@ -2265,9 +2290,7 @@ function render(){
   renderMetrics(p);
   if(KITS[curTab]){renderKit(KITS[curTab],p);if(curTab==='anest')renderAir(p);}else if(curTab==='card')renderCard(p);else if(curTab==='scales')renderScales(p);else if(curTab==='ceap')renderCeap();else if(curTab==='sclero')renderSclero(p);else renderMain(p);
   lastP=p;scheduleHist();
-  const resEl=curTab==='main'?$('#result'):KITS[curTab]?E(KITS[curTab],'Result'):null;
-  if(resEl&&resEl.firstElementChild&&!resEl.querySelector('.to-list'))resEl.insertAdjacentHTML('afterbegin',`<button type="button" class="copy to-list" data-to-list="${curTab==='main'?'drugH':curTab+'H'}">↑ Другой препарат</button>`);
-  syncTabHint();
+  syncTabHint();syncPicked(p);
 }
 function renderMain(p){
   const d=cur();
@@ -2360,7 +2383,7 @@ function renderMain(p){
   }
 
   if(r.msgs.length)html+=`<ul class="msgs">${r.msgs.map(msgHTML).join('')}</ul>`;
-  if(r.trace.length&&!stopped)html+=`<details class="trace" open><summary>Как посчитано</summary><ol>${r.trace.map(t=>`<li>${t}</li>`).join('')}</ol></details>`;
+  if(r.trace.length&&!stopped)html+=`<details class="trace"><summary>Как посчитано</summary><ol>${r.trace.map(t=>`<li>${t}</li>`).join('')}</ol></details>`;
   html+=`<div class="src"><div><span class="lbl">Источник</span>${d.src.map(s=>`<a href="${s[1]}" target="_blank" rel="noopener">${s[0]}</a>`).join(' · ')}</div>${d.srcNote?`<p>${d.srcNote}</p>`:''}</div>`;
   html+='</div>';
   el.innerHTML=html;
@@ -3122,7 +3145,7 @@ $('#myKit').addEventListener('click',event=>{
     }
     $('#smpQ').value='';
     K.st.drug=e.drug;K.st.form[e.drug]=e.form;
-    renderKitDrugs(K);filterKit(K);render();
+    renderKitDrugs(K);filterKit(K);collapseAfterPick('smp');render();
     return;
   }
   try{localStorage.setItem(kitStorageKey,JSON.stringify(personalKit));$('#kitNotice').textContent='';}
@@ -3306,7 +3329,7 @@ function renderKit(K,p){
     html+=cardCopy(K.copy);
   }
   if(r.msgs.length)html+=`<ul class="msgs">${r.msgs.map(msgHTML).join('')}</ul>`;
-  if(r.trace.length&&!stopped)html+=`<details class="trace" open><summary>Как посчитано</summary><ol>${r.trace.map(t=>`<li>${t}</li>`).join('')}</ol></details>`;
+  if(r.trace.length&&!stopped)html+=`<details class="trace"><summary>Как посчитано</summary><ol>${r.trace.map(t=>`<li>${t}</li>`).join('')}</ol></details>`;
   html+=srcHTML+'</div>';
   el.innerHTML=html;
 }
@@ -3840,6 +3863,7 @@ function restoreHist(e){
     if(e.tab==='smp'){const v=e.variant||'gen';$(v==='rean'?'#smpVarRean':'#smpVarGen').checked=true;if(K.variant!==v)setSmpVariant(v);}
     K.st.drug=e.id;K.st.form[e.id]=e.form;if(e.reg)K.st.reg[e.id]=e.reg;K.st.built=null;renderKitDrugs(K);filterKit(K);
   }else if(e.tab==='sclero'){Object.assign(sc,e.sc);sc.built=null;}
+  if(e.tab==='main'||KITS[e.tab])collapseAfterPick(e.tab);
   setTab(e.tab);
   const res=document.getElementById({main:'result',smp:'smpResult',anest:'anestResult',abx:'abxResult',sclero:'scResult'}[e.tab]);
   if(res&&res.scrollIntoView){try{res.scrollIntoView({block:'start',behavior:window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});}catch(err){}}
@@ -3885,8 +3909,9 @@ function startCode(){
 
 /* ================= Что нового ================= */
 // APP_VER должен совпадать с номером в sw.js (doza-vN) — build.py проверяет
-const APP_VER=18;
+const APP_VER=19;
 const CHANGES=[
+  {v:19,items:['Компактнее на телефоне: после выбора препарата список и данные пациента сворачиваются в одну строку, а расчёт виден сразу. «Сменить» и «Изменить» раскрывают их обратно.']},
   {v:18,items:['Проще начать: подписи к вкладкам, а после выбора препарата экран сам переходит к расчёту.']},
   {v:17,items:['Антикоагулянты и антиагреганты сверены с инструкциями в РЛС: исправлены дозы надропарина, фондапаринукса и сулодексида, у каждого препарата — прямая ссылка на инструкцию.','Надропарин: добавлена профилактика у больных на постельном режиме.']},
   {v:15,items:['Вкладка «Анестезиология» теперь называется «АиР»: скорость инфузии в каплях, ожоги с инфузией по Паркленду, шкалы Апгар и Сильвермана.','Кнопка «В Telegram» отправляет ссылку на готовый расчёт — коллега откроет тот же препарат с теми же данными пациента.','Печать и PDF схемы с датой.','«Мой набор»: отметьте свои препараты ☆ и включите «Только мой набор».']},
@@ -3994,8 +4019,46 @@ document.addEventListener('click',e=>{
     $('#appNotice').hidden=true;markSeen();
     document.querySelector('.presets [data-p="4,0,m,16,104,"]').click();
     state.drug='paracetamol';renderDrugs();filterDrugs();
+    collapseAfterPick('main');
     setTab('main');
     setTimeout(()=>scrollToEl($('#result')),50);
+  }
+});
+/* ================= Компактный режим ================= */
+const PICK_H={main:'drugH',smp:'smpH',anest:'anestH',abx:'abxH'};
+const pickPanel=k=>document.getElementById(PICK_H[k]).closest('.panel');
+Object.keys(PICK_H).forEach(k=>{
+  pickPanel(k).querySelector('.ph').insertAdjacentHTML('afterend',`<div class="picked-bar"><b class="pb-n" id="pick_${k}"></b><button type="button" class="copy" data-pick-open="${k}">Сменить</button></div>`);
+});
+$('aside.panel .ph').insertAdjacentHTML('afterend','<div class="pat-sum"><span id="patSumTxt"></span><button type="button" class="copy" data-pat-open>Изменить</button></div>');
+function collapseAfterPick(k){
+  if(PICK_H[k])pickPanel(k).classList.add('picked');
+  const p=readPatient();
+  if(p.ok)$('aside.panel').classList.add('pat-collapsed');
+}
+function syncPicked(p){
+  $('#pick_main').textContent=cur().name;
+  Object.values(KITS).forEach(K=>{const d=K.list.find(x=>x.id===K.st.drug);const el=$('#pick_'+K.key);if(el)el.textContent=d?d.name:'';});
+  const a=$('aside.panel');
+  if(!p||!p.ok){a.classList.remove('pat-collapsed');return;}
+  const kidney=p.crcl!=null?` · ${p.crclMethod==='cg'?'КК':'СКФ'} ${nf(p.crcl,0)} мл/мин`:'';
+  const extra=[p.preg?(p.preg==='lact'?'ГВ':'беременность'):'',p.liver?'болезнь печени':''].filter(Boolean).join(' · ');
+  $('#patSumTxt').textContent=`${ageText(p)} · ${p.sex==='m'?'муж.':'жен.'} · ${nf(p.w,1)} кг${p.h?` · ${nf(p.h,0)} см`:''}${kidney}${extra?' · '+extra:''}`;
+}
+document.addEventListener('click',e=>{
+  const t=e.target;
+  const po=t.closest&&t.closest('[data-pick-open]');
+  if(po){
+    const k=po.dataset.pickOpen,pnl=pickPanel(k);pnl.classList.remove('picked');
+    const q=pnl.querySelector('.inbox.search input');
+    if(q){q.value='';if(k==='main')filterDrugs();else filterKit(KITS[k]);}
+    scrollToEl(pnl);
+    if(q)setTimeout(()=>{try{q.focus({preventScroll:true});}catch(err){}},noMotion()?0:350);
+    return;
+  }
+  if(t.closest&&t.closest('[data-pat-open]')){
+    $('aside.panel').classList.remove('pat-collapsed');
+    $('#patH').scrollIntoView({block:'start',behavior:noMotion()?'auto':'smooth'});
   }
 });
 function syncMine(){document.querySelectorAll('[data-mine]').forEach(c=>{c.checked=!!MINE[c.dataset.mine];});}
@@ -4050,6 +4113,7 @@ function gGo(o){
   }else if(o.tab==='sclero'&&sc.drug!==o.drug){sc.drug=o.drug;sc.ind=o.drug==='pol'?'ret':SCL[o.drug].ind[0].id;scDefaults();sc.built=null;}
   filterDrugs();Object.values(KITS).forEach(K=>{if(E(K,'Q'))filterKit(K);});
   $('#gq').value='';closeGSearch();$('#gq').blur();
+  if(o.id)collapseAfterPick(o.tab);
   setTab(o.tab);
   const t=o.anchor?document.getElementById(o.anchor):document.getElementById({main:'result',smp:'smpResult',anest:'anestResult',abx:'abxResult',sclero:'scResult',ceap:'ceapForm',card:'cardResult',scales:'scalesForm'}[o.tab]);
   if(t&&t.scrollIntoView){try{t.scrollIntoView({block:'start',behavior:window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});}catch(e){}}
@@ -4084,6 +4148,7 @@ function setTab(t){
 }
 
 function clearPatient(){
+  $('aside.panel').classList.remove('pat-collapsed');
   clearTimeout(histTimer);
   userTouched=false;
   for(const id of ['ageY','ageMo','weight','height','creat','preg']) $('#'+id).value='';
@@ -4132,7 +4197,7 @@ $('#drugs').addEventListener('click',e=>{
   const b=e.target.closest('.drug');if(!b)return;
   state.drug=b.dataset.id;
   document.querySelectorAll('#drugs .drug').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.id===b.dataset.id)));
-  render();setTimeout(()=>scrollToEl($('#result')),30);
+  collapseAfterPick('main');render();setTimeout(()=>scrollToEl($('#result')),30);
 });
 document.querySelector('.presets').addEventListener('click',e=>{
   const b=e.target.closest('.preset');if(!b)return;
@@ -4157,7 +4222,7 @@ Object.values(KITS).forEach(K=>{
     const b=e.target.closest('.drug');if(!b)return;
     K.st.drug=b.dataset.id;
     E(K,'Drugs').querySelectorAll('.drug').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.id===b.dataset.id)));
-    render();setTimeout(()=>scrollToEl(E(K,'Result')),30);
+    collapseAfterPick(K.key);render();setTimeout(()=>scrollToEl(E(K,'Result')),30);
   });
   E(K,'Result').addEventListener('click',e=>{
     if(e.target.dataset&&e.target.dataset.link){
