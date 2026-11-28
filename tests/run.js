@@ -9,6 +9,7 @@
 const fs = require('fs'), path = require('path');
 const ROOT = path.join(__dirname, '..');
 const SNAP = path.join(__dirname, 'snapshot.json');
+const SNAP_KITS = path.join(__dirname, 'snapshot-kits.json');
 
 // ---- загрузка кода калькулятора из исходника без браузера ----
 function load() {
@@ -29,7 +30,7 @@ function load() {
     location: { hash: '', search: '', pathname: '/' }, history: { replaceState() {} }, matchMedia: () => ({ matches: false }), navigator: {}
   };
   g.window = g;
-  const fn = new Function(...Object.keys(g), code + ';return {DRUGS,convert,amt,burnMap,b64e,b64d,APP_VER};');
+  const fn = new Function(...Object.keys(g), code + ';return {DRUGS,convert,amt,burnMap,b64e,b64d,APP_VER,smpCalc,SMP,REANIM,ANEST,ABX};');
   return fn(...Object.values(g));
 }
 const C = load();
@@ -120,6 +121,13 @@ const sample = JSON.stringify({ t: 'main', i: 'at_apixaban', p: { y: '82', w: '5
 check('ссылка: кодирование и раскодирование', { back: C.b64d(C.b64e(sample)) }, { back: sample });
 check('ссылка: только безопасные символы', { ok: /^[A-Za-z0-9_-]+$/.test(C.b64e(sample)) }, { ok: true });
 
+// СМП: сверка с РЛС 28.11.2026
+{
+  const dx = C.SMP.find(d => d.id === 'dexamethasone'), reg = dx.regs.find(r => r.id === 'em');
+  const r = C.smpCalc(dx, dx.forms[0], reg, Object.assign({}, PATIENTS.child10));
+  check('дексаметазон ребёнку 32 кг — разовая 0,89–5,33 мг (РЛС 0,028–0,167 мг/кг)', { lo: Math.round(r.lo * 100) / 100, hi: Math.round(r.hi * 100) / 100 }, { lo: 0.89, hi: 5.33 });
+}
+
 // ---- 2. снимок всех расчётов ----
 const snap = {};
 for (const d of C.DRUGS) for (const m of (d.modes || [{ id: null }])) for (const f of d.forms) for (const [pn, p] of Object.entries(PATIENTS)) {
@@ -143,5 +151,39 @@ if (process.argv.includes('--update') || !fs.existsSync(SNAP)) {
   if (diff) { fails++; console.log(`Изменилось ${diff} расчётов. Если это намеренно — проверьте и запустите: node tests/run.js --update`); }
   else passed++;
 }
-console.log(`\n${fails ? 'ОШИБКИ' : 'OK'}: проверок пройдено ${passed}, не пройдено ${fails}. Расчётов в снимке: ${Object.keys(snap).length}.`);
+// ---- 3. снимок укладок: СМП, реанимационная укладка, АиР, антибиотики в/в ----
+const fmt = v => v == null ? '—' : Math.round(v * 1000) / 1000;
+function kitOut(d, f, reg, p) {
+  const r = C.smpCalc(d, f, reg, Object.assign({}, p));
+  const stop = r.msgs.find(m => m.lvl === 'stop');
+  if (stop) return 'STOP: ' + stop.t;
+  if (r.kind === 'bolus') return `${fmt(r.lo)}–${fmt(r.hi)} ${r.u}${r.freq ? ' · ' + r.freq : ''}${r.maxT ? ' · макс ' + r.maxT : ''}`;
+  if (r.kind === 'inf') return `инфузия ${fmt(r.inf.mlhLo)}–${fmt(r.inf.mlhHi)} мл/ч`;
+  if (r.kind === 'custom') return 'расчёт: ' + (r.rows || []).map(x => x.k + ' ' + x.v).join('; ');
+  return 'справка';
+}
+const kitSnap = {};
+for (const [name, list] of [['smp', C.SMP], ['rean', C.REANIM], ['anest', C.ANEST], ['abx', C.ABX]]) {
+  for (const d of list) for (const f of d.forms) {
+    const regs = (d.regs || []).filter(g => !g.f || g.f.includes(f.id));
+    for (const reg of (regs.length ? regs : [null])) for (const [pn, p] of Object.entries(PATIENTS)) {
+      let out; try { out = kitOut(d, f, reg, p); } catch (e) { out = 'ERROR: ' + e.message; }
+      kitSnap[[name, d.id, f.id, reg ? reg.id : '-', pn].join('|')] = String(out).replace(/ /g, ' ');
+    }
+  }
+}
+Object.entries(kitSnap).filter(([, v]) => v.startsWith('ERROR')).forEach(([k, v]) => { fails++; console.log('✗ сбой расчёта ' + k + ': ' + v); });
+if (process.argv.includes('--update') || !fs.existsSync(SNAP_KITS)) {
+  fs.writeFileSync(SNAP_KITS, JSON.stringify(kitSnap, null, 1) + '\n');
+  console.log('Эталон укладок записан: ' + Object.keys(kitSnap).length + ' расчётов.');
+} else {
+  const old = JSON.parse(fs.readFileSync(SNAP_KITS, 'utf8'));
+  let diff = 0;
+  for (const k of new Set([...Object.keys(old), ...Object.keys(kitSnap)])) if (old[k] !== kitSnap[k]) {
+    if (++diff <= 30) console.log('≠ ' + k + '\n   было:  ' + (old[k] ?? '—') + '\n   стало: ' + (kitSnap[k] ?? '—'));
+  }
+  if (diff) { fails++; console.log(`Изменилось ${diff} расчётов укладок. Если это намеренно — node tests/run.js --update`); } else passed++;
+}
+
+console.log(`\n${fails ? 'ОШИБКИ' : 'OK'}: проверок пройдено ${passed}, не пройдено ${fails}. Расчётов в снимке: ${Object.keys(snap).length} + укладки ${Object.keys(kitSnap).length}.`);
 process.exit(fails ? 1 : 0);

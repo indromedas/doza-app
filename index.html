@@ -317,6 +317,7 @@ footer p{margin:0}
   h1{font-size:19px}
   .top p{display:none}
 }
+.label-card .report{color:var(--muted)}
 .terms .ver{font:12px var(--font-num);color:var(--muted)}
 footer b{color:var(--ink);font-weight:600}
 </style>
@@ -535,7 +536,7 @@ footer b{color:var(--ink);font-weight:600}
         <p><b>Ваши данные.</b> Возраст, пол, вес, рост и креатинин обрабатываются только на вашем устройстве и никуда не передаются. Избранное и последние 10 расчётов хранятся в памяти браузера на этом устройстве; историю можно очистить кнопкой под данными пациента. Регистрации, аналитики и рекламы нет.</p>
         <p><b>Нашли ошибку в дозе?</b> Сообщите — это важнее всего: <a href="https://github.com/indromedas/doza-app/issues" target="_blank" rel="noopener">github.com/indromedas/doza-app/issues</a>.</p>
         <p><b>Права.</b> © 2026 indromedas. Использование для личной профессиональной работы — свободно. Копирование, изменение и распространение, в том числе коммерческое, — только с разрешения автора.</p>
-        <p class="ver">Версия <span id="verNum">20</span> · данные сверены в ноябре 2026 года · <button type="button" class="copy" id="showChanges">Что нового</button></p>
+        <p class="ver">Версия <span id="verNum">21</span> · данные сверены в ноябре 2026 года · <button type="button" class="copy" id="showChanges">Что нового</button></p>
       </div>
     </details>
   </footer>
@@ -2572,6 +2573,7 @@ const SMP=[
  regs:[{id:'iv',label:'Тахиаритмия, в/в',route:'в/в медленно (после разведения), не быстрее 50 мг/мин',a:{fix:[500,1000]},max:'разовая 1 г, суточная 3 г; под контролем ЭКГ и АД'}],cNo:KIDS,
  extra(p,r){r.trace.push('При скорости 50 мг/мин 1000 мг вводят не быстрее чем за 20 мин');}},
 {id:'lidocaine',name:'Лидокаин',g:'cv',src:[['Лидокаин — описание вещества',AS('lidokain-220')]],
+ srcNote:'Взрослые дозы — РЛС. Детская доза при аритмии 1 мг/кг в РЛС не указана — по рекомендациям по реанимации (ERC 2021).',
  forms:[amp('a2','20 мг/мл (2%) · амп. 2 мл',20,'мг',2),amp('a10','100 мг/мл (10%) · амп. 2 мл (только после разведения)',100,'мг',2)],
  regs:[{id:'arr',label:'Желудочковая аритмия',route:'в/в струйно за 3–4 мин',a:{fix:[50,100]},c:{kg:[1,1]},freq:'взрослым далее 1–4 мг/мин; детям повтор через 5 мин',max:'взрослым до 300–400 мг за 1 ч; детям суммарно не более 3 мг/кг'}],
  notes:[['info','Противопоказан при кардиогенном шоке, СССУ, AV-блокаде, WPW-синдроме.']]},
@@ -2682,11 +2684,12 @@ const SMP=[
 {id:'ethanol',name:'Этанол',g:'topic',src:[['Поиск в РЛС',SRCH('этанол')]],forms:[nonef('Раствор для наружного применения')],
  info:'Обработка кожи и рук перед инъекциями и манипуляциями.'},
 {id:'dexamethasone',name:'Дексаметазон',g:'topic',src:[['Дексаметазон — описание вещества',AS('deksametazon-478')]],
- srcNote:'Схема при крупе (0,15–0,6 мг/кг) — клинические рекомендации «Острый обструктивный ларингит»; остальные дозы — РЛС.',
+ srcNote:'Сверено с РЛС 28.11.2026: детям в/м 0,028–0,167 мг/кг на введение каждые 12–24 ч. Схема при крупе (0,15–0,6 мг/кг) — клинические рекомендации «Острый обструктивный ларингит»; остальные дозы — РЛС.',
  forms:[amp('a1','4 мг/мл · амп. 1 мл',4,'мг',1),amp('a2','4 мг/мл · амп. 2 мл (8 мг)',4,'мг',2)],
- regs:[{id:'em',label:'Неотложные состояния',route:'в/в медленно или в/м',a:{fix:[4,20]},c:{kg:[0.083,0.333],t:'суточная доза, в 3–4 введения'},max:'взрослым до 80 мг на введение'},
+ regs:[{id:'em',label:'Неотложные состояния',route:'в/в медленно или в/м',a:{fix:[4,20]},c:{kg:[0.02776,0.16665],t:'на одно введение, каждые 12–24 ч'},freq:'взрослым 3–4 раза в сутки; детям каждые 12–24 ч',max:'взрослым до 80 мг на введение'},
        {id:'croup',label:'Ложный круп у детей',route:'в/м или в/в',c:{kg:[0.15,0.6],max:10},a:{stop:'Схема для детей.'}}]},
 {id:'prednisolone',name:'Преднизолон',g:'topic',src:[['Преднизолон — описание вещества',AS('prednizolon-297')]],
+ srcNote:'Взрослые дозы сверены с РЛС 28.11.2026. Детская доза для в/в введения при шоке в РЛС не указана (там только внутрь 1–2 мг/кг в сутки) — уточните по клиническим рекомендациям.',
  forms:[amp('a','30 мг/мл · амп. 1 мл',30,'мг',1)],
  regs:[{id:'shock',label:'Шок',route:'в/в струйно, затем капельно (или в/м)',a:{fix:[50,150]},c:{kg:[1,2],t:'начальная доза для детей'},freq:'повтор через 3–4 ч',max:'в тяжёлых случаях до 400 мг; суточно 0,3–1,2 г'},
        {id:'adr',label:'Острая надпочечниковая недостаточность',route:'в/в',a:{fix:[100,200]},freq:'суточно 0,3–0,4 г'}],
@@ -3406,7 +3409,7 @@ function favHTML(t,list){
 }
 const favBtn=(t,id)=>`<button type="button" class="fav" data-fav="${t}:${id}" aria-pressed="${isFav(t,id)}" title="${isFav(t,id)?'Убрать из моего набора':'Добавить в мой набор'}">${isFav(t,id)?'★ В моём наборе':'☆ В мой набор'}</button>`;
 const APP_URL='https://indromedas.github.io/doza-app/';
-const tgShare=txt=>`<a class="copy" data-tgshare data-text="${esc(String(txt).replace(/ /g,' '))}" href="https://t.me/share/url?url=${encodeURIComponent(APP_URL)}&text=${encodeURIComponent(String(txt).replace(/ /g,' '))}" target="_blank" rel="noopener">В Telegram</a><button type="button" class="copy" data-print>Печать</button>`;
+const tgShare=txt=>`<a class="copy" data-tgshare data-text="${esc(String(txt).replace(/ /g,' '))}" href="https://t.me/share/url?url=${encodeURIComponent(APP_URL)}&text=${encodeURIComponent(String(txt).replace(/ /g,' '))}" target="_blank" rel="noopener">В Telegram</a><button type="button" class="copy" data-print>Печать</button><button type="button" class="copy report" data-report>Нашли ошибку?</button>`;
 document.addEventListener('click',e=>{
   const f=e.target.closest('[data-fav]');
   if(f){const [t,id]=f.dataset.fav.split(':');toggleFav(t,id);renderDrugs();Object.values(KITS).forEach(renderKitDrugs);filterDrugs();Object.values(KITS).forEach(K=>{if(E(K,'Q'))filterKit(K);});render();return;}
@@ -3911,8 +3914,9 @@ function startCode(){
 
 /* ================= Что нового ================= */
 // APP_VER должен совпадать с номером в sw.js (doza-vN) — build.py проверяет
-const APP_VER=20;
+const APP_VER=21;
 const CHANGES=[
+  {v:21,items:['СМП: исправлена детская доза дексаметазона — теперь разовая, по инструкции в РЛС (0,028–0,167 мг/кг каждые 12–24 ч).','Кнопка «Нашли ошибку?» в каждой карточке — собирает текст сообщения с расчётом.']},
   {v:19,items:['Компактнее на телефоне: после выбора препарата список и данные пациента сворачиваются в одну строку, а расчёт виден сразу. «Сменить» и «Изменить» раскрывают их обратно.']},
   {v:18,items:['Проще начать: подписи к вкладкам, а после выбора препарата экран сам переходит к расчёту.']},
   {v:17,items:['Антикоагулянты и антиагреганты сверены с инструкциями в РЛС: исправлены дозы надропарина, фондапаринукса и сулодексида, у каждого препарата — прямая ссылка на инструкцию.','Надропарин: добавлена профилактика у больных на постельном режиме.']},
@@ -4062,6 +4066,27 @@ document.addEventListener('click',e=>{
     $('aside.panel').classList.remove('pat-collapsed');
     $('#patH').scrollIntoView({block:'start',behavior:noMotion()?'auto':'smooth'});
   }
+});
+/* ================= Сообщить об ошибке ================= */
+// Куда приходят сообщения: имя пользователя Telegram основателя без @. Пока пусто — открывается форма на GitHub.
+const FEEDBACK_TG='';
+document.addEventListener('click',e=>{
+  const b=e.target.closest&&e.target.closest('[data-report]');if(!b)return;
+  const foot=b.closest('.foot'),note=foot&&foot.querySelector('.copied');
+  const scheme=(foot&&foot.querySelector('[data-tgshare]')||{dataset:{}}).dataset.text||'';
+  const h=histCurrent();
+  const title=h?h.title:((document.querySelector('.tabs [aria-selected="true"]')||{}).textContent||'').trim();
+  const pat=h?h.pt:'';
+  const body=`Ошибка в расчёте RX (версия ${APP_VER})\nРаздел: ${title}${pat?'\nПациент: '+pat:''}\nСхема: ${scheme}\nСсылка на расчёт: ${shareURL(shareCode())}\n\nЧто не так:\n`;
+  try{navigator.clipboard.writeText(body).catch(()=>{});}catch(err){}
+  if(note)note.textContent='Текст скопирован — вставьте его в сообщение';
+  const url=FEEDBACK_TG?`https://t.me/${FEEDBACK_TG}`:`https://github.com/indromedas/doza-app/issues/new?title=${encodeURIComponent('Ошибка: '+title)}&body=${encodeURIComponent(body)}`;
+  const tg=window.Telegram&&window.Telegram.WebApp;
+  try{
+    if(inTg()&&FEEDBACK_TG)tg.openTelegramLink(url);
+    else if(inTg())tg.openLink(url);
+    else window.open(url,'_blank','noopener');
+  }catch(err){window.open(url,'_blank','noopener');}
 });
 function syncMine(){document.querySelectorAll('[data-mine]').forEach(c=>{c.checked=!!MINE[c.dataset.mine];});}
 
