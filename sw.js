@@ -1,6 +1,6 @@
 /* Офлайн-кэш калькулятора дозировок.
    При каждом обновлении калькулятора увеличивайте VERSION — старый кэш удалится. */
-const VERSION = 'doza-v19';
+const VERSION = 'doza-v20';
 const CORE = ['./', 'index.html', 'manifest.webmanifest', 'icon-180.png', 'icon-192.png', 'icon-512.png',
   'fonts/fonts.css', 'fonts/GolosText-cyrillic-0.woff2', 'fonts/GolosText-latin-1.woff2',
   'fonts/JetBrainsMono-cyrillic-2.woff2', 'fonts/JetBrainsMono-latin-3.woff2'];
@@ -28,10 +28,11 @@ self.addEventListener('fetch', e => {
   const url = new URL(req.url);
 
   // Страница: сначала сеть (чтобы приходили обновления), без сети — сохранённая копия.
-  // no-cache: сверяться с сервером, а не брать страницу из HTTP-кэша браузера (GitHub Pages держит её 10 минут)
+  // Уникальный адрес и no-store: страница не берётся ни из кэша браузера, ни из кэша CDN GitHub Pages (он держит копию до 10 минут).
+  // Адрес документа при этом не меняется — параметры ссылки на расчёт (?s=…) страница читает как прежде.
   if (req.mode === 'navigate' && url.origin === location.origin) {
     e.respondWith(
-      withTimeout(fetch(req.url, { cache: 'no-cache', credentials: 'same-origin' }), 4000)
+      withTimeout(fetch(url.origin + url.pathname + '?fresh=' + Date.now(), { cache: 'no-store', credentials: 'same-origin' }), 4000)
         .then(r => { const copy = r.clone(); caches.open(VERSION).then(c => c.put('index.html', copy)); return r; })
         .catch(() => caches.match('index.html').then(r => r || caches.match('./')))
     );
