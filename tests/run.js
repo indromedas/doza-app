@@ -128,6 +128,17 @@ check('ссылка: только безопасные символы', { ok: /^
   check('дексаметазон ребёнку 32 кг — разовая 0,89–5,33 мг (РЛС 0,028–0,167 мг/кг)', { lo: Math.round(r.lo * 100) / 100, hi: Math.round(r.hi * 100) / 100 }, { lo: 0.89, hi: 5.33 });
 }
 
+// Пуролаза: таблица инструкции (РЛС 28.11.2026)
+{
+  const pu = C.SMP.find(d => d.id === 'prourokinase');
+  const rows = (reg, w) => { const r = C.smpCalc(pu, pu.forms[0], pu.regs.find(x => x.id === reg), P({ ageY: 60, w })); return r.rows.map(x => x.v.replace(/ /g, ' ')); };
+  for (const [w, sec] of [[60, '0 МЕ'], [61, '1 000 000 МЕ'], [74, '1 000 000 МЕ'], [76, '2 000 000 МЕ'], [100, '3 000 000 МЕ'], [120, '4 000 000 МЕ']])
+    check(`Пуролаза двойной болюс, ${w} кг → второй ${sec}`, { second: rows('db', w)[1] }, { second: sec });
+  check('Пуролаза болюс+инфузия 55 кг → инфузия 3,5 млн', { inf: rows('bi', 55)[1] }, { inf: '3 500 000 МЕ' });
+  check('Пуролаза болюс+инфузия 74 кг → инфузия 4 млн', { inf: rows('bi', 74)[1] }, { inf: '4 000 000 МЕ' });
+  check('Пуролаза болюс+инфузия 90 кг → инфузия 6 млн', { inf: rows('bi', 90)[1] }, { inf: '6 000 000 МЕ' });
+}
+
 // ---- 2. снимок всех расчётов ----
 const snap = {};
 for (const d of C.DRUGS) for (const m of (d.modes || [{ id: null }])) for (const f of d.forms) for (const [pn, p] of Object.entries(PATIENTS)) {
